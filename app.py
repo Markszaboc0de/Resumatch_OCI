@@ -147,7 +147,6 @@ def calculate_matches_background(cv_id, cv_text):
         new_scores = []
         for idx, score in enumerate(scores):
             similarity = float(score)
-            # Store all positive/zero/negative matches to ensure Top 3 is always filled
             new_scores.append(Precalc_Scores(
                 cv_id=cv_id,
                 jd_id=job_ids[idx],
@@ -326,65 +325,39 @@ def employer():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    user_cvs = CVs.query.filter_by(user_id=current_user.id).order_by(CVs.upload_date.desc()).all()
+
     if request.method == 'POST':
-        # Handling Resume Upload
-        if 'file' not in request.files:
+        # Check CV Limit
+        if len(user_cvs) >= 5:
+            flash('You have reached the limit of 5 CVs. Please delete one to upload a new one.')
+            return redirect(url_for('profile'))
+
+        if 'resume' not in request.files:
             flash('No file part')
             return redirect(request.url)
-        file = request.files['file']
+        
+        file = request.files['resume']
+        
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
-        
-        try:
-            if file and (file.filename.endswith('.pdf') or file.filename.endswith('.docx')): 
-                # Note: docx support requested, but library not imported yet. Focusing on PDF/TXT for now.
-                
+            
+        if file and allowed_file(file.filename):
+            try:
+                # 1. Secure Filename
                 filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                unique_filename = f"{current_user.id}_{int(time.time())}_{filename}"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                
+                # 2. Save File
                 file.save(filepath)
                 
-                raw_text = ""
+                # 3. Extract Text based on extension
+                extracted_text = ""
                 if filename.lower().endswith('.pdf'):
-                    raw_text = extract_text_from_pdf(filepath)
+                    extracted_text = extract_text_from_pdf(filepath)
                 elif filename.lower().endswith('.txt'):
-                    raw_text = extract_text_from_txt(filepath)
-                else:
-                    raw_text = "" # DOCX placeholder
-                
-                # Clean up uploaded file
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                
-                if raw_text:
-                    # Sanitize text: Remove null bytes which cause PostgreSQL/Driver errors
-                    raw_text = raw_text.replace('\x00', '')
-                    
-                    new_cv = CVs(
-                        user_id=current_user.user_id,
-                        raw_text=raw_text,
-                        parsed_tokens=clean_text(raw_text)
-                    )
-                    db.session.add(new_cv)
-                    db.session.commit()
-                    
-                    # Trigger Background Task
-                    thread = threading.Thread(target=calculate_matches_background, args=(new_cv.cv_id, raw_text))
-                    thread.daemon = True 
-                    thread.start()
-                    
-                    flash('Resume uploaded successfully! Matching started.')
-                    return redirect(url_for('dashboard'))
-                else:
-                    flash('Could not extract text from file. Please ensure it is a valid text-based PDF or TXT file.')
-        except Exception as e:
-            print(f"CRITICAL ERROR during upload: {e}")
-            import traceback
-            traceback.print_exc()
-            flash(f'An internal error occurred: {str(e)}')
-            return redirect(url_for('profile'))
-
-    
     # Check if user has a CV
     user_cv = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).first()
     has_cv = True if user_cv else False
