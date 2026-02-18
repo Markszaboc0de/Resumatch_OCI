@@ -22,7 +22,7 @@ def populate_jobs():
     
     # Try reading with pandas for robust CSV handling
     try:
-        df = pd.read_csv(CSV_FILE, on_bad_lines='skip', engine='python')
+        df = pd.read_csv(CSV_FILE, sep=';', on_bad_lines='skip', engine='python')
     except Exception as e:
         print(f"Error reading CSV with pandas: {e}")
         return
