@@ -228,34 +228,45 @@ def refresh_all_matches():
         job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
 
         # 3. Compute Similarity Matrix
-        # util.cos_sim returns a matrix [num_cvs, num_jobs]
-        cosine_scores = util.cos_sim(cv_embeddings, job_embeddings)
-
-        # 4. Prepare Score Objects
-        new_scores = []
-        for i in range(len(cvs)):
-            for j in range(len(jobs)):
-                score = float(cosine_scores[i][j])
-                # Store all scores to ensure Dream Job always has candidates
-                new_scores.append(Precalc_Scores(
-                    cv_id=cv_ids[i],
-                    jd_id=job_ids[j],
-                    similarity_score=score
-                ))
-        
-        # 5. Update Database
-        try:
-            # Clear existing scores (Full Refresh)
-            num_deleted = db.session.query(Precalc_Scores).delete()
-            print(f"Deleted {num_deleted} old scores.")
+        # 3. Calculate Scores Matrix [N_CVs, M_Jobs]
+        # Only if both have items
+        if len(cv_embeddings) > 0 and len(job_embeddings) > 0:
+            all_scores_matrix = util.cos_sim(cv_embeddings, job_embeddings)
             
-            # Bulk Insert New
-            db.session.bulk_save_objects(new_scores)
-            db.session.commit()
-            print(f"Successfully refreshed table with {len(new_scores)} matches.")
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error refreshing scores: {e}")
+            # 4. Save to DB (Optimized)
+            new_scores_objects = []
+            
+            for i, cv in enumerate(cvs):
+                # Get scores for this CV against all jobs
+                cv_scores = all_scores_matrix[i] # Tensor shape [M_Jobs]
+                
+                # Pair with Job IDs and Score
+                cv_matches = []
+                for j, score in enumerate(cv_scores):
+                    cv_matches.append({
+                        'cv_id': cv.cv_id,
+                        'jd_id': job_ids[j],
+                        'similarity_score': float(score)
+                    })
+                
+                # Sort and Keep Top 10
+                top_10 = sorted(cv_matches, key=lambda x: x['similarity_score'], reverse=True)[:10]
+                
+                for match in top_10:
+                    new_scores_objects.append(Precalc_Scores(**match))
+
+            # Batch Insert
+            try:
+                # Truncate table first to be clean (optional but good for refresh)
+                db.session.query(Precalc_Scores).delete()
+                
+                # Bulk save
+                db.session.bulk_save_objects(new_scores_objects)
+                db.session.commit()
+                print(f"Full Refresh Logic Complete. Saved {len(new_scores_objects)} top matches.")
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error saving refresh matches: {e}")
 
 # --- ROUTES ---
 
