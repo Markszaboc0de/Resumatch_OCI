@@ -358,11 +358,35 @@ def profile():
                 if filename.lower().endswith('.pdf'):
                     extracted_text = extract_text_from_pdf(filepath)
                 elif filename.lower().endswith('.txt'):
-    # Check if user has a CV
-    user_cv = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).first()
-    has_cv = True if user_cv else False
+                    extracted_text = extract_text_from_txt(filepath)
+                
+                # 4. Clean Text (Remove null bytes specifically)
+                cleaned_text = clean_text(extracted_text)
+                cleaned_text = cleaned_text.replace('\x00', '') # Extra safety
+                
+                # 5. Save to Database
+                new_cv = CVs(
+                    user_id=current_user.id,
+                    filename=unique_filename,
+                    file_path=filepath,
+                    raw_text=cleaned_text # Store cleaned text to avoid DB errors
+                )
+                db.session.add(new_cv)
+                db.session.commit()
 
-    return render_template('profile.html', has_cv=has_cv)
+                # 6. Trigger Background Match Calculation
+                thread = threading.Thread(target=calculate_matches_background, args=(new_cv.cv_id, cleaned_text))
+                thread.start()
+                
+                flash('Resume uploaded successfully! Job matching started in background.')
+                return redirect(url_for('profile'))
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error during upload: {e}")
+                flash(f'An error occurred during upload: {str(e)}')
+                return redirect(request.url)
+
+    return render_template('profile.html', user=current_user, cvs=user_cvs)
 
 @app.route('/dream_job')
 @login_required
