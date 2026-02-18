@@ -54,6 +54,8 @@ class CVs(db.Model):
     __tablename__ = 'cvs'
     cv_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=True) # Integer as per DB schema
+    filename = db.Column(db.String(255), nullable=True) # Store the filename
+    file_path = db.Column(db.String(512), nullable=True) # Store full path
     raw_text = db.Column(db.Text, nullable=False)
     parsed_tokens = db.Column(db.Text, nullable=True) # JSON or specific format if needed
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)

@@ -59,7 +59,7 @@
                             {% for cv in cvs %}
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-0">{{ cv.filename.split('_', 2)[-1] }}</h6>
+                                    <h6 class="mb-0">{{ (cv.filename or 'Unknown.pdf').split('_', 2)[-1] }}</h6>
                                     <small class="text-muted">Uploaded: {{ cv.upload_date.strftime('%Y-%m-%d')
                                         }}</small>
                                 </div>
