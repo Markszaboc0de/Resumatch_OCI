@@ -147,12 +147,12 @@ def calculate_matches_background(cv_id, cv_text):
         new_scores = []
         for idx, score in enumerate(scores):
             similarity = float(score)
-            if similarity > 0.0: # Optional threshold
-                new_scores.append(Precalc_Scores(
-                    cv_id=cv_id,
-                    jd_id=job_ids[idx],
-                    similarity_score=similarity
-                ))
+            # Store all positive/zero/negative matches to ensure Top 3 is always filled
+            new_scores.append(Precalc_Scores(
+                cv_id=cv_id,
+                jd_id=job_ids[idx],
+                similarity_score=similarity
+            ))
         
         # Batch insert for performance
         try:
@@ -204,12 +204,12 @@ def refresh_all_matches():
         for i in range(len(cvs)):
             for j in range(len(jobs)):
                 score = float(cosine_scores[i][j])
-                if score > 0.0: # Optional threshold
-                    new_scores.append(Precalc_Scores(
-                        cv_id=cv_ids[i],
-                        jd_id=job_ids[j],
-                        similarity_score=score
-                    ))
+                # Store all scores to ensure Dream Job always has candidates
+                new_scores.append(Precalc_Scores(
+                    cv_id=cv_ids[i],
+                    jd_id=job_ids[j],
+                    similarity_score=score
+                ))
         
         # 5. Update Database
         try:
