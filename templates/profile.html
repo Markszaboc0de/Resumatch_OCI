@@ -59,6 +59,15 @@
                             </div>
                             <button type="submit" class="btn btn-success">Upload Resume</button>
                         </form>
+
+                        {% if has_cv %}
+                        <hr class="my-4">
+                        <div class="text-center">
+                            <h4 class="mb-3">Ready to find your match?</h4>
+                            <a href="{{ url_for('dream_job') }}"
+                                class="btn btn-warning btn-lg shadow-sm text-darkfw-bold">✨ Show me my dream job ✨</a>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

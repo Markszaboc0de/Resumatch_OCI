@@ -313,7 +313,44 @@ def profile():
             else:
                 flash('Could not extract text from file.')
 
-    return render_template('profile.html')
+    
+    # Check if user has a CV
+    user_cv = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).first()
+    has_cv = True if user_cv else False
+
+    return render_template('profile.html', has_cv=has_cv)
+
+@app.route('/dream_job')
+@login_required
+def dream_job():
+    # Get latest CV
+    user_cv = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).first()
+    
+    if not user_cv:
+        flash("Please upload a resume first to see your dream job matches.")
+        return redirect(url_for('profile'))
+
+    # Get Top 3 Matches
+    results = db.session.query(Precalc_Scores, Job_Descriptions).\
+        join(Job_Descriptions, Precalc_Scores.jd_id == Job_Descriptions.jd_id).\
+        filter(Precalc_Scores.cv_id == user_cv.cv_id).\
+        order_by(Precalc_Scores.similarity_score.desc()).\
+        limit(3).all() 
+
+    matches = []
+    for score_entry, job in results:
+        matches.append({
+            "id": job.jd_id,
+            "title": job.title,
+            "company": job.company,
+            "description": job.raw_text[:300] + "...", 
+            "score": round(score_entry.similarity_score * 100, 1),
+            "url": job.url,
+            "city": job.city,
+            "country": job.country
+        })
+
+    return render_template('dream_jobs.html', matches=matches)
 
 
 @app.route('/matches/<int:cv_id>')
