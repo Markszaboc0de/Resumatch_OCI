@@ -336,45 +336,50 @@ def profile():
             flash('No selected file')
             return redirect(request.url)
         
-        if file and (file.filename.endswith('.pdf') or file.filename.endswith('.docx')): # Note: docx support requested, but library not imported yet. Focusing on PDF/TXT for now from previous steps, will treat docx as TODO or basic text if I can.
-            # Actually user asked for .docx support. I need python-docx for that. 
-            # I'll stick to PDF for now or try to extract if I add the lib.
-            # For this step I will only implement text extraction for PDF/TXT as I have those functions. 
-            # If docx is uploaded it might fail extraction unless I add logic.
-            
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            
-            raw_text = ""
-            if filename.lower().endswith('.pdf'):
-                raw_text = extract_text_from_pdf(filepath)
-            elif filename.lower().endswith('.txt'):
-                raw_text = extract_text_from_txt(filepath)
-            else:
-                raw_text = "" # DOCX placeholder
-            
-            os.remove(filepath)
-            
-            if raw_text:
-                new_cv = CVs(
-                    user_id=current_user.user_id,
-                    raw_text=raw_text,
-                    parsed_tokens=clean_text(raw_text)
-                )
-                db.session.add(new_cv)
-                db.session.commit()
+        try:
+            if file and (file.filename.endswith('.pdf') or file.filename.endswith('.docx')): 
+                # Note: docx support requested, but library not imported yet. Focusing on PDF/TXT for now.
                 
-                # TODO: Trigger NLP Tokenization here
-                # Trigger Background Task
-                thread = threading.Thread(target=calculate_matches_background, args=(new_cv.cv_id, raw_text))
-                thread.daemon = True 
-                thread.start()
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
                 
-                flash('Resume uploaded successfully! Matching started.')
-                return redirect(url_for('dashboard'))
-            else:
-                flash('Could not extract text from file.')
+                raw_text = ""
+                if filename.lower().endswith('.pdf'):
+                    raw_text = extract_text_from_pdf(filepath)
+                elif filename.lower().endswith('.txt'):
+                    raw_text = extract_text_from_txt(filepath)
+                else:
+                    raw_text = "" # DOCX placeholder
+                
+                # Clean up uploaded file
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                
+                if raw_text:
+                    new_cv = CVs(
+                        user_id=current_user.user_id,
+                        raw_text=raw_text,
+                        parsed_tokens=clean_text(raw_text)
+                    )
+                    db.session.add(new_cv)
+                    db.session.commit()
+                    
+                    # Trigger Background Task
+                    thread = threading.Thread(target=calculate_matches_background, args=(new_cv.cv_id, raw_text))
+                    thread.daemon = True 
+                    thread.start()
+                    
+                    flash('Resume uploaded successfully! Matching started.')
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash('Could not extract text from file. Please ensure it is a valid text-based PDF or TXT file.')
+        except Exception as e:
+            print(f"CRITICAL ERROR during upload: {e}")
+            import traceback
+            traceback.print_exc()
+            flash(f'An internal error occurred: {str(e)}')
+            return redirect(url_for('profile'))
 
     
     # Check if user has a CV
