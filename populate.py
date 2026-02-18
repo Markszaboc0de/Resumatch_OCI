@@ -2,7 +2,7 @@ import csv
 import os
 import pandas as pd
 from dotenv import load_dotenv
-from app import app, db, Job_Descriptions, clean_text, refresh_all_matches
+from app import app, db, Job_Descriptions, CVs, Precalc_Scores, clean_text, refresh_all_matches
 
 # Load environment variables
 load_dotenv()
