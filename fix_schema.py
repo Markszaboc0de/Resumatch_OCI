@@ -1,17 +1,13 @@
-import os
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Use fallback if env var is missing (dev default)
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://mac:csenger@localhost/resumatch')
+from app import app, db
+from sqlalchemy import text
 
 def fix_schema():
-    print(f"Connecting to {DATABASE_URL}...")
-    engine = create_engine(DATABASE_URL)
-    
-    with engine.connect() as conn:
+    with app.app_context():
+        # Get engine from configured app
+        engine = db.engine
+        print(f"Connecting to {engine.url}...")
+        
+        with engine.connect() as conn:
         print("Checking/Adding 'filename' column...")
         try:
             conn.execute(text("ALTER TABLE cvs ADD COLUMN filename VARCHAR(255);"))

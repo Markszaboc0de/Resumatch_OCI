@@ -402,7 +402,7 @@ def delete_cv(cv_id):
     
     try:
         # Delete file from filesystem
-        if os.path.exists(cv.file_path):
+        if cv.file_path and os.path.exists(cv.file_path):
             os.remove(cv.file_path)
             
         # Delete from database
