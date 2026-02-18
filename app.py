@@ -22,7 +22,8 @@ app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024
 
 # Database Configuration (Local PostgreSQL)
 # app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://user:password@localhost/dbname"
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+# Fallback to local DB if DATABASE_URL is not set
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', "postgresql://app_user:app_user@localhost:5432/job_match_db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
