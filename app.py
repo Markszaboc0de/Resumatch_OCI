@@ -325,7 +325,7 @@ def employer():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    user_cvs = CVs.query.filter_by(user_id=current_user.id).order_by(CVs.upload_date.desc()).all()
+    user_cvs = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).all()
 
     if request.method == 'POST':
         # Check CV Limit
@@ -347,7 +347,7 @@ def profile():
             try:
                 # 1. Secure Filename
                 filename = secure_filename(file.filename)
-                unique_filename = f"{current_user.id}_{int(time.time())}_{filename}"
+                unique_filename = f"{current_user.user_id}_{int(time.time())}_{filename}"
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                 
                 # 2. Save File
@@ -366,7 +366,7 @@ def profile():
                 
                 # 5. Save to Database
                 new_cv = CVs(
-                    user_id=current_user.id,
+                    user_id=current_user.user_id,
                     filename=unique_filename,
                     file_path=filepath,
                     raw_text=cleaned_text # Store cleaned text to avoid DB errors
@@ -387,6 +387,33 @@ def profile():
                 return redirect(request.url)
 
     return render_template('profile.html', user=current_user, cvs=user_cvs)
+
+@app.route('/delete_cv/<int:cv_id>', methods=['POST'])
+@login_required
+def delete_cv(cv_id):
+    cv = CVs.query.get_or_404(cv_id)
+    
+    # Ensure the CV belongs to the current user
+    if cv.user_id != current_user.user_id:
+        flash('Unauthorized action.')
+        return redirect(url_for('profile'))
+    
+    try:
+        # Delete file from filesystem
+        if os.path.exists(cv.file_path):
+            os.remove(cv.file_path)
+            
+        # Delete from database
+        Precalc_Scores.query.filter_by(cv_id=cv_id).delete()
+        
+        db.session.delete(cv)
+        db.session.commit()
+        flash('CV deleted successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting CV: {e}')
+        
+    return redirect(url_for('profile'))
 
 @app.route('/dream_job')
 @login_required
