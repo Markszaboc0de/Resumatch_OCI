@@ -42,13 +42,16 @@ def populate_jobs():
             title = row.get('Job Title', 'Unknown Title')
             city = row.get('City', None)
             country = row.get('Country', None)
-            raw_text = row.get('Job Description', '')
+            raw_text = row.get('Job Description')
             url = row.get('URL', None)
             
-            # Simple validation
-            if not raw_text:
+            # Simple validation: Check for NaN or empty string
+            if pd.isna(raw_text) or str(raw_text).strip() == '':
                 print(f"Skipping row {index}: Missing raw_text")
                 continue
+            
+            # Ensure raw_text is a string
+            raw_text = str(raw_text)
 
             # NLP Tokenization (using clean_text from app.py)
             parsed_tokens = clean_text(raw_text)
