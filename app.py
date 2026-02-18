@@ -163,6 +163,68 @@ def calculate_matches_background(cv_id, cv_text):
             db.session.rollback()
             print(f"Error saving scores for CV ID {cv_id}: {e}")
 
+def refresh_all_matches():
+    """
+    Recalculates match scores for ALL CVs against ALL active Job Descriptions.
+    Used after bulk data updates.
+    """
+    with app.app_context():
+        print("Starting full score refresh...")
+        
+        # 1. Fetch Data
+        cvs = CVs.query.all()
+        jobs = Job_Descriptions.query.filter_by(active_status=True).all()
+        
+        if not cvs or not jobs:
+            print("Insufficient data (CVs or Jobs) to calculate matches.")
+            return
+
+        print(f"Matches to compute: {len(cvs)} CVs x {len(jobs)} Jobs")
+
+        # 2. Prepare Embeddings
+        # Note: Ideally caching these embeddings would be better, but for now we re-encode
+        # to ensure consistency with any model updates or text cleaning changes.
+        
+        # Encode CVs
+        cv_texts = [clean_text(cv.raw_text) for cv in cvs]
+        cv_ids = [cv.cv_id for cv in cvs]
+        cv_embeddings = nlp_model.encode(cv_texts, convert_to_tensor=True)
+
+        # Encode Jobs
+        job_texts = [clean_text(job.raw_text) for job in jobs]
+        job_ids = [job.jd_id for job in jobs]
+        job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+
+        # 3. Compute Similarity Matrix
+        # util.cos_sim returns a matrix [num_cvs, num_jobs]
+        cosine_scores = util.cos_sim(cv_embeddings, job_embeddings)
+
+        # 4. Prepare Score Objects
+        new_scores = []
+        for i in range(len(cvs)):
+            for j in range(len(jobs)):
+                score = float(cosine_scores[i][j])
+                if score > 0.0: # Optional threshold
+                    new_scores.append(Precalc_Scores(
+                        cv_id=cv_ids[i],
+                        jd_id=job_ids[j],
+                        similarity_score=score
+                    ))
+        
+        # 5. Update Database
+        try:
+            # Clear existing scores (Full Refresh)
+            num_deleted = db.session.query(Precalc_Scores).delete()
+            print(f"Deleted {num_deleted} old scores.")
+            
+            # Bulk Insert New
+            db.session.bulk_save_objects(new_scores)
+            db.session.commit()
+            print(f"Successfully refreshed table with {len(new_scores)} matches.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error refreshing scores: {e}")
+
 # --- ROUTES ---
 
 @app.route('/')
