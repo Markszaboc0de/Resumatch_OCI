@@ -168,6 +168,38 @@ def populate_jobs():
                 db.session.rollback()
                 print(f"Error final batch: {e}")
 
+        # --- CACHING EMBEDDINGS ---
+        print("Calculating and Caching Job Embeddings...")
+        try:
+            import torch
+            
+            # Fetch all active jobs (we just inserted them)
+            jobs = Job_Descriptions.query.filter_by(active_status=True).all()
+            if jobs:
+                print(f"Encoding {len(jobs)} jobs for cache...")
+                # We can reuse parsed_tokens if available to save cleaning time, 
+                # but cleaning again ensures consistency.
+                job_texts = [clean_text(job.raw_text) for job in jobs]
+                job_ids = [job.jd_id for job in jobs]
+                
+                # Encode 
+                job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+                
+                # Save to file
+                output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+                torch.save({
+                    'embeddings': job_embeddings,
+                    'ids': job_ids
+                }, output_path)
+                print(f"Saved job embeddings to {output_path}")
+            else:
+                print("No jobs found to cache.")
+                
+        except Exception as e:
+            print(f"Error caching embeddings: {e}")
+            import traceback
+            traceback.print_exc()
+
     print("Population and scoring complete.")
 
 if __name__ == "__main__":

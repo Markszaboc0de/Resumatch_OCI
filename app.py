@@ -140,12 +140,15 @@ def load_cached_embeddings():
 
 def calculate_matches_background(cv_id, cv_text):
     with app.app_context():
+        start_time = time.time()
+        print(f"[{start_time}] Starting background matching for CV ID: {cv_id}")
+        
         # 1. Check for Cached Embeddings
         job_embeddings, job_ids = load_cached_embeddings()
         
         if job_embeddings is None:
             # Fallback to DB fetch (Slow path)
-            print("Cache miss. Fetching from DB (SLOW)...")
+            print(f"[{time.time()}] Cache miss. Fetching from DB (SLOW)...")
             active_jobs = Job_Descriptions.query.filter_by(active_status=True).all()
             if not active_jobs:
                 print("No active jobs found for matching.")
@@ -153,12 +156,14 @@ def calculate_matches_background(cv_id, cv_text):
 
             job_texts = [clean_text(job.raw_text) for job in active_jobs] # Or use cleaned text if stored
             job_ids = [job.jd_id for job in active_jobs]
+            print(f"[{time.time()}] Encoding {len(job_texts)} jobs from DB...")
             job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
         else:
-            print(f"Using cached embeddings for {len(job_ids)} jobs (FAST).")
+            print(f"[{time.time()}] Using cached embeddings for {len(job_ids)} jobs (FAST).")
 
         # 2. Encode CV
         cleaned_cv = clean_text(cv_text)
+        print(f"[{time.time()}] Encoding User CV...")
         cv_embedding = nlp_model.encode(cleaned_cv, convert_to_tensor=True)
 
         # 3. Calculate Cosine Similarity
