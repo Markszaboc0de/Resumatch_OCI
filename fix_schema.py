@@ -21,7 +21,14 @@ def fix_schema():
                 print("Added 'file_path' column.")
             except Exception as e:
                 print(f"Column 'file_path' might already exist or error: {e}")
-                
+            
+            print("Checking/Adding 'is_main' column...")
+            try:
+                conn.execute(text("ALTER TABLE cvs ADD COLUMN is_main BOOLEAN DEFAULT FALSE;"))
+                print("Added 'is_main' column.")
+            except Exception as e:
+                print(f"Column 'is_main' might already exist or error: {e}")
+
             conn.commit()
     print("Schema update complete.")
 

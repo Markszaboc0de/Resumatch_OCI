@@ -59,6 +59,7 @@ class CVs(db.Model):
     raw_text = db.Column(db.Text, nullable=False)
     parsed_tokens = db.Column(db.Text, nullable=True) # JSON or specific format if needed
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+    is_main = db.Column(db.Boolean, default=False)
 
 class Job_Descriptions(db.Model):
     __tablename__ = 'job_descriptions'
@@ -440,11 +441,37 @@ def delete_cv(cv_id):
         
     return redirect(url_for('profile'))
 
+@app.route('/set_main_cv/<int:cv_id>', methods=['POST'])
+@login_required
+def set_main_cv(cv_id):
+    cv = CVs.query.get_or_404(cv_id)
+    if cv.user_id != current_user.user_id:
+        flash('Unauthorized action.')
+        return redirect(url_for('profile'))
+    
+    try:
+        # Reset all other CVs for this user
+        CVs.query.filter_by(user_id=current_user.user_id).update({'is_main': False})
+        
+        # Set this one as main
+        cv.is_main = True
+        db.session.commit()
+        flash('Main resume updated successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating main resume: {e}')
+        
+    return redirect(url_for('profile'))
+
 @app.route('/dream_job')
 @login_required
 def dream_job():
-    # Get latest CV
-    user_cv = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).first()
+    # 1. Try to get the "Main" CV
+    user_cv = CVs.query.filter_by(user_id=current_user.user_id, is_main=True).first()
+    
+    # 2. Fallback: Get most recent CV
+    if not user_cv:
+        user_cv = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).first()
     
     if not user_cv:
         flash("Please upload a resume first to see your dream job matches.")
