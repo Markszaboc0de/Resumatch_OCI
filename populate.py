@@ -106,32 +106,12 @@ def populate_jobs():
                     db.session.add_all(new_jobs_batch)
                     db.session.flush() # Flushes to DB to get IDs, doesn't commit yet
                     
-                    # B. Calculate Scores for this batch if CVs exist
-                    if cvs and new_jobs_batch:
-                        # Encode current batch of jobs
-                        batch_job_texts = [j.parsed_tokens for j in new_jobs_batch] # Use parsed_tokens as it's already cleaned
-                        batch_job_embeddings = nlp_model.encode(batch_job_texts, convert_to_tensor=True)
-                        
-                        # Calculate Sim Matrix [num_cvs, num_batch_jobs]
-                        cosine_scores = util.cos_sim(cv_embeddings, batch_job_embeddings)
-                        
-                        new_scores = []
-                        for i in range(len(cvs)):
-                            for j in range(len(new_jobs_batch)):
-                                score = float(cosine_scores[i][j])
-                                new_scores.append(Precalc_Scores(
-                                    cv_id=cv_ids[i],
-                                    jd_id=new_jobs_batch[j].jd_id,
-                                    similarity_score=score
-                                ))
-                        
-                        # Bulk save scores
-                        db.session.bulk_save_objects(new_scores)
-
-                    # C. Commit everything
+                    # B. Logic removed: No longer calculating scores per batch to avoid DB bloat.
+                    
+                    # C. Commit Job Batch
                     db.session.commit()
                     total_inserted += len(new_jobs_batch)
-                    print(f"Processed batch of {len(new_jobs_batch)} jobs + scores. Total jobs: {total_inserted}")
+                    print(f"Processed batch of {len(new_jobs_batch)} jobs. Total jobs: {total_inserted}")
                     new_jobs_batch = [] 
 
                 except Exception as e:
@@ -143,24 +123,6 @@ def populate_jobs():
         if new_jobs_batch:
             try:
                 db.session.add_all(new_jobs_batch)
-                db.session.flush()
-                
-                if cvs:
-                    batch_job_texts = [j.parsed_tokens for j in new_jobs_batch]
-                    batch_job_embeddings = nlp_model.encode(batch_job_texts, convert_to_tensor=True)
-                    cosine_scores = util.cos_sim(cv_embeddings, batch_job_embeddings)
-                    
-                    new_scores = []
-                    for i in range(len(cvs)):
-                        for j in range(len(new_jobs_batch)):
-                            score = float(cosine_scores[i][j])
-                            new_scores.append(Precalc_Scores(
-                                cv_id=cv_ids[i],
-                                jd_id=new_jobs_batch[j].jd_id,
-                                similarity_score=score
-                            ))
-                    db.session.bulk_save_objects(new_scores)
-                
                 db.session.commit()
                 total_inserted += len(new_jobs_batch)
                 print(f"Processed final batch. Total: {total_inserted}")
@@ -168,7 +130,7 @@ def populate_jobs():
                 db.session.rollback()
                 print(f"Error final batch: {e}")
 
-        # --- CACHING EMBEDDINGS ---
+        # --- CACHING EMBEDDINGS & CALCULATING MATCHES (Top 10 Only) ---
         print("Calculating and Caching Job Embeddings...")
         try:
             import torch
@@ -177,12 +139,10 @@ def populate_jobs():
             jobs = Job_Descriptions.query.filter_by(active_status=True).all()
             if jobs:
                 print(f"Encoding {len(jobs)} jobs for cache...")
-                # We can reuse parsed_tokens if available to save cleaning time, 
-                # but cleaning again ensures consistency.
                 job_texts = [clean_text(job.raw_text) for job in jobs]
                 job_ids = [job.jd_id for job in jobs]
                 
-                # Encode 
+                # Encode Jobs
                 job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
                 
                 # Save to file
@@ -192,11 +152,52 @@ def populate_jobs():
                     'ids': job_ids
                 }, output_path)
                 print(f"Saved job embeddings to {output_path}")
+
+                # --- MATCHING Logic (If CVs exist) ---
+                if cvs:
+                    print(f"Calculating Top 10 matches for {len(cvs)} CVs...")
+                    
+                    # Compute Similarity Matrix [N_CVs, M_Jobs]
+                    # cv_embeddings was computed at the start
+                    cosine_scores = util.cos_sim(cv_embeddings, job_embeddings)
+                    
+                    new_scores_objects = []
+                    
+                    for i, cv in enumerate(cvs):
+                        # Get scores for this CV against all jobs
+                        cv_scores = cosine_scores[i]
+                        
+                        # Pair with Job IDs and Score
+                        cv_matches = []
+                        for j, score in enumerate(cv_scores):
+                            cv_matches.append({
+                                'cv_id': cv_ids[i], # cv_ids list from start
+                                'jd_id': job_ids[j],
+                                'similarity_score': float(score)
+                            })
+                        
+                        # Sort and Keep Global Top 10
+                        top_10 = sorted(cv_matches, key=lambda x: x['similarity_score'], reverse=True)[:10]
+                        
+                        for match in top_10:
+                            new_scores_objects.append(Precalc_Scores(**match))
+                    
+                    # Batch Insert Scores
+                    try:
+                        # Clear any existing scores (should be empty due to TRUNCATE but safe to do)
+                        db.session.query(Precalc_Scores).delete()
+                        db.session.bulk_save_objects(new_scores_objects)
+                        db.session.commit()
+                        print(f"Saved {len(new_scores_objects)} top matches to Precalc_Scores.")
+                    except Exception as e:
+                        db.session.rollback()
+                        print(f"Error saving matches: {e}")
+
             else:
                 print("No jobs found to cache.")
                 
         except Exception as e:
-            print(f"Error caching embeddings: {e}")
+            print(f"Error caching/matching: {e}")
             import traceback
             traceback.print_exc()
 
