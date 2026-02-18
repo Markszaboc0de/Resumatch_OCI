@@ -357,6 +357,9 @@ def profile():
                     os.remove(filepath)
                 
                 if raw_text:
+                    # Sanitize text: Remove null bytes which cause PostgreSQL/Driver errors
+                    raw_text = raw_text.replace('\x00', '')
+                    
                     new_cv = CVs(
                         user_id=current_user.user_id,
                         raw_text=raw_text,
