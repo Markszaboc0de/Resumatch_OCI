@@ -124,31 +124,45 @@ def extract_text_from_txt(filepath):
         print(f"Error reading TXT: {e}")
         return ""
 
+def load_cached_embeddings():
+    """Helper to load pre-calculated job embeddings"""
+    try:
+        import torch
+        cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+        if os.path.exists(cache_path):
+            print(f"Loading cached embeddings from {cache_path}...")
+            cache = torch.load(cache_path)
+            return cache.get('embeddings'), cache.get('ids')
+    except Exception as e:
+        print(f"Failed to load cached embeddings: {e}")
+    return None, None
+
 def calculate_matches_background(cv_id, cv_text):
-    """
-    Background task to calculate similarity scores for a new CV against all active JDs.
-    """
     with app.app_context():
-        print(f"Starting background matching for CV ID: {cv_id}")
+        # 1. Check for Cached Embeddings
+        job_embeddings, job_ids = load_cached_embeddings()
         
-        # 1. Fetch all active Job Descriptions
-        active_jobs = Job_Descriptions.query.filter_by(active_status=True).all()
-        if not active_jobs:
-            print("No active jobs found for matching.")
-            return
+        if job_embeddings is None:
+            # Fallback to DB fetch (Slow path)
+            print("Cache miss. Fetching from DB (SLOW)...")
+            active_jobs = Job_Descriptions.query.filter_by(active_status=True).all()
+            if not active_jobs:
+                print("No active jobs found for matching.")
+                return 
 
-        job_texts = [job.raw_text for job in active_jobs] # Or use cleaned text if stored
-        job_ids = [job.jd_id for job in active_jobs]
+            job_texts = [clean_text(job.raw_text) for job in active_jobs] # Or use cleaned text if stored
+            job_ids = [job.jd_id for job in active_jobs]
+            job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+        else:
+            print(f"Using cached embeddings for {len(job_ids)} jobs (FAST).")
 
-        # 2. Encode CV and Jobs
+        # 2. Encode CV
         cleaned_cv = clean_text(cv_text)
-        cleaned_jobs = [clean_text(text) for text in job_texts]
-
-        # Vectorize
         cv_embedding = nlp_model.encode(cleaned_cv, convert_to_tensor=True)
-        job_embeddings = nlp_model.encode(cleaned_jobs, convert_to_tensor=True)
 
         # 3. Calculate Cosine Similarity
+        # cv_embedding is [1, 384], job_embeddings is [N, 384]
+        # util.cos_sim returns [1, N]
         scores = util.cos_sim(cv_embedding, job_embeddings)[0]
 
         # 4. Insert into Precalc_Scores
@@ -163,6 +177,9 @@ def calculate_matches_background(cv_id, cv_text):
         
         # Batch insert for performance
         try:
+            # Clear existing scores for this CV to avoid duplicates if re-running
+            Precalc_Scores.query.filter_by(cv_id=cv_id).delete()
+            
             db.session.bulk_save_objects(new_scores)
             db.session.commit()
             print(f"Successfully calculated and saved {len(new_scores)} matches for CV ID: {cv_id}")
