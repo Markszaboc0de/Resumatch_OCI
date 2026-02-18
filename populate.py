@@ -7,12 +7,12 @@ from app import app, db, Job_Descriptions, clean_text, refresh_all_matches
 # Load environment variables
 load_dotenv()
 
-CSV_FILE = 'jobs_data.csv'
+CSV_FILE = 'jobs.csv'
 BATCH_SIZE = 100
 
 def populate_jobs():
     """
-    Reads jobs_data.csv and populates the Job_Descriptions table.
+    Reads jobs.csv and populates the Job_Descriptions table.
     """
     if not os.path.exists(CSV_FILE):
         print(f"Error: {CSV_FILE} not found.")
@@ -37,13 +37,13 @@ def populate_jobs():
         print("Connected to database.")
         
         for index, row in df.iterrows():
-            # Extract fields with safe defaults
-            company = row.get('company', None)
-            title = row.get('title', 'Unknown Title')
-            city = row.get('city', None)
-            country = row.get('country', None)
-            raw_text = row.get('raw_text', '')
-            url = row.get('url', None)
+            # Extract fields with safe defaults - Mapped to actual CSV headers
+            company = row.get('Company', None)
+            title = row.get('Job Title', 'Unknown Title')
+            city = row.get('City', None)
+            country = row.get('Country', None)
+            raw_text = row.get('Job Description', '')
+            url = row.get('URL', None)
             
             # Simple validation
             if not raw_text:
