@@ -14,6 +14,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 # Define base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-unsafe-key-for-dev')
 upload_folder_name = os.getenv('UPLOAD_FOLDER', 'uploads')
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, upload_folder_name)
