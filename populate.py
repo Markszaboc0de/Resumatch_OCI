@@ -35,6 +35,20 @@ def populate_jobs():
     
     with app.app_context():
         print("Connected to database.")
+
+        # 1. Clear existing Jobs and Scores (Overwrite mode)
+        try:
+            print("Clearing existing Job Descriptions and Scores...")
+            # Deleting jobs will cascade delete scores if configured, but let's be explicit/safe
+            # Delete Scores first to avoid FK constraint issues if cascade isn't perfect
+            num_scores = db.session.query(Precalc_Scores).delete()
+            num_jobs = db.session.query(Job_Descriptions).delete()
+            db.session.commit()
+            print(f"Deleted {num_jobs} old jobs and {num_scores} old scores.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error clearing old data: {e}")
+            return
         
         for index, row in df.iterrows():
             # Extract fields with safe defaults - Mapped to actual CSV headers
