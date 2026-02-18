@@ -1,0 +1,11 @@
+flask
+pypdf
+werkzeug
+pandas
+Flask-SQLAlchemy
+psycopg2-binary
+gunicorn
+scikit-learn
+sentence-transformers
+flask-login
+

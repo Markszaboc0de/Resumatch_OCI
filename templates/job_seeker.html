@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumatch - Job Seeker Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('landing') }}">Resumatch</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('listings') }}">Database Listing</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">Job Seeker Portal</h1>
+        <div class="card p-4 mb-4">
+            <h4>Upload Resume (.pdf)</h4>
+            <form method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <input class="form-control" type="file" name="file" accept=".pdf" required>
+                </div>
+                <button type="submit" class="btn btn-success">Find Matching Jobs</button>
+            </form>
+        </div>
+
+        {% if matches %}
+        <div class="mt-5">
+            <h2>Top 3 Matched Jobs</h2>
+            <table class="table table-striped table-hover mt-3">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Job ID</th>
+                        <th>Job Title</th>
+                        <th>Match Score</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in matches %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ job.id }}</td>
+                        <td>{{ job.title }}</td>
+                        <td>{{ job.score }}%</td>
+                        <td><a href="{{ job.url }}" target="_blank" class="btn btn-primary btn-sm">View Job</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
