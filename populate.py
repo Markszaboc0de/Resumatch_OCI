@@ -7,12 +7,12 @@ from app import app, db, Job_Descriptions, clean_text, refresh_all_matches
 # Load environment variables
 load_dotenv()
 
-CSV_FILE = 'jobs.csv'
+CSV_FILE = 'jobs_data.csv'
 BATCH_SIZE = 100
 
 def populate_jobs():
     """
-    Reads jobs.csv and populates the Job_Descriptions table.
+    Reads jobs_data.csv and populates the Job_Descriptions table.
     """
     if not os.path.exists(CSV_FILE):
         print(f"Error: {CSV_FILE} not found.")
