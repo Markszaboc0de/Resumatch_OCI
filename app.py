@@ -14,16 +14,14 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 # Define base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-unsafe-key-for-dev')
 upload_folder_name = os.getenv('UPLOAD_FOLDER', 'uploads')
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, upload_folder_name)
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
 
 # Database Configuration (Local PostgreSQL)
-# app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://user:password@localhost/dbname"
-# Fallback to local DB if DATABASE_URL is not set
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', "postgresql://app_user:app_user@localhost:5432/job_match_db")
+# Fallback updated to use 'mypswd' just in case the .env fails to load
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', "postgresql://app_user:Mindenszarhoz@localhost:5432/job_match_db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
