@@ -51,7 +51,11 @@ def populate_jobs():
                 continue
             
             # Ensure raw_text is a string
-            raw_text = str(raw_text)
+            raw_text = str(raw_text).replace('\x00', '')
+            if company: company = str(company).replace('\x00', '')
+            if title: title = str(title).replace('\x00', '')
+            if city: city = str(city).replace('\x00', '')
+            if country: country = str(country).replace('\x00', '')
 
             # NLP Tokenization (using clean_text from app.py)
             parsed_tokens = clean_text(raw_text)
