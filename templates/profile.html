@@ -27,86 +27,64 @@
                     </div>
                     <div class="card-body">
                         <form>
-                            <!-- Fields for First/Last Name as requested, purely for UI display as DB stores Username -->
                             <div class="row mb-3">
                                 <div class="col">
-                                    <label for="firstName" class="form-label">First Name</label>
-                                    <input type="text" class="form-control" id="firstName" placeholder="First Name">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" value="{{ current_user.username }}"
+                                        disabled>
                                 </div>
                                 <div class="col">
-                                    <label for="lastName" class="form-label">Last Name</label>
-                                    <input type="text" class="form-control" id="lastName" placeholder="Last Name">
+                                    <label class="form-label">Email</label>
+                                    <input type="text" class="form-control" value="{{ current_user.email }}" disabled>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Username</label>
-                                <input type="text" class="form-control" value="{{ current_user.username }}" disabled>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <h4 class="mb-3">Your Resumes</h4>
+                        <p class="text-muted small">You can upload a maximum of 5 resumes.</p>
+
+                        <!-- Upload Form -->
+                        <form method="POST" enctype="multipart/form-data" class="mb-4">
+                            <div class="input-group">
+                                <input type="file" class="form-control" name="resume" accept=".pdf,.txt" required>
+                                <button type="submit" class="btn btn-success">Upload New Resume</button>
                             </div>
                         </form>
 
-                        <div class="profile-card">
-                            <h2>Your Profile</h2>
-                            <p><strong>Username:</strong> {{ user.username }}</p>
-                            <p><strong>Email:</strong> {{ user.email }}</p>
-
-                            <hr>
-
-                            <h3>Upload New Resume</h3>
-                            <p>Max 5 resumes allow.</p>
-                            <form method="POST" enctype="multipart/form-data">
-                                <input type="file" name="resume" accept=".pdf,.txt" required>
-                                <button type="submit" class="btn">Upload Resume</button>
-                            </form>
-
-                            <hr>
-
-                            <h3>Your Resumes</h3>
-                            {% if cvs %}
-                            <ul class="cv-list">
-                                {% for cv in cvs %}
-                                <li
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 5px;">
-                                    <span>{{ cv.filename }} ({{ cv.upload_date.strftime('%Y-%m-%d') }})</span>
-                                    <form action="{{ url_for('delete_cv', cv_id=cv.cv_id) }}" method="POST"
-                                        style="display:inline;">
-                                        <button type="submit" class="btn-danger"
-                                            style="background-color: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Delete</button>
-                                    </form>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            <p>No resumes uploaded yet.</p>
-                            {% endif %}
-
-                            <div class="actions">
-                                <a href="{{ url_for('logout') }}" class="btn-secondary">Logout</a>
+                        <!-- Resume List -->
+                        {% if cvs %}
+                        <div class="list-group mb-4">
+                            {% for cv in cvs %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ cv.filename.split('_', 2)[-1] }}</h6>
+                                    <small class="text-muted">Uploaded: {{ cv.upload_date.strftime('%Y-%m-%d')
+                                        }}</small>
+                                </div>
+                                <form action="{{ url_for('delete_cv', cv_id=cv.cv_id) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                </form>
                             </div>
+                            {% endfor %}
                         </div>
-                        <hr class="my-4">
 
-                        <h5 class="mb-3">Upload Resume</h5>
-                        <form method="POST" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="file" class="form-label">Select Resume (.pdf, .docx)</label>
-                                <input class="form-control" type="file" id="file" name="file" accept=".pdf,.docx"
-                                    required>
-                            </div>
-                            <button type="submit" class="btn btn-success">Upload Resume</button>
-                        </form>
-
-                        {% if has_cv %}
-                        <hr class="my-4">
+                        <!-- Dream Job Button (Only if CVs exist) -->
                         <div class="text-center">
+                            <hr class="my-4">
                             <h4 class="mb-3">Ready to find your match?</h4>
-                            <a href="{{ url_for('dream_job') }}"
-                                class="btn btn-warning btn-lg shadow-sm text-darkfw-bold">✨ Show me my dream job ✨</a>
+                            <a href="{{ url_for('dream_job') }}" class="btn btn-warning btn-lg shadow-sm fw-bold">✨ Show
+                                me my dream job ✨</a>
                         </div>
+                        {% else %}
+                        <div class="alert alert-info">No resumes uploaded yet. Upload one above to get started!</div>
                         {% endif %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Log Out</a>
+                        </div>
                     </div>
                 </div>
             </div>
