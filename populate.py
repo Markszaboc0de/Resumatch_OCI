@@ -2,7 +2,9 @@ import csv
 import os
 import pandas as pd
 from dotenv import load_dotenv
-from app import app, db, Job_Descriptions, CVs, Precalc_Scores, clean_text, refresh_all_matches
+from sqlalchemy import text
+from app import app, db, Job_Descriptions, CVs, Precalc_Scores, clean_text, nlp_model
+from sentence_transformers import util
 
 # Load environment variables
 load_dotenv()
@@ -12,7 +14,7 @@ BATCH_SIZE = 100
 
 def populate_jobs():
     """
-    Reads jobs_data.csv and populates the Job_Descriptions table.
+    Reads jobs_data.csv, clears old data efficiently, and handles batch import + scoring.
     """
     if not os.path.exists(CSV_FILE):
         print(f"Error: {CSV_FILE} not found.")
@@ -20,38 +22,45 @@ def populate_jobs():
 
     print(f"Reading {CSV_FILE}...")
     
-    # Try reading with pandas for robust CSV handling
     try:
         df = pd.read_csv(CSV_FILE, sep=';', on_bad_lines='skip', engine='python')
     except Exception as e:
         print(f"Error reading CSV with pandas: {e}")
         return
-
-    # Normalize column names if needed (optional, assuming standard names)
-    # Expected columns based on user request: company, title, city, country, raw_text, url
-    
-    new_objects = []
+        
+    new_jobs_batch = []
     total_inserted = 0
     
     with app.app_context():
         print("Connected to database.")
 
-        # 1. Clear existing Jobs and Scores (Overwrite mode)
+        # 1. Fast Clear with TRUNCATE
         try:
-            print("Clearing existing Job Descriptions and Scores...")
-            # Deleting jobs will cascade delete scores if configured, but let's be explicit/safe
-            # Delete Scores first to avoid FK constraint issues if cascade isn't perfect
-            num_scores = db.session.query(Precalc_Scores).delete()
-            num_jobs = db.session.query(Job_Descriptions).delete()
+            print("Clearing tables with TRUNCATE...")
+            db.session.execute(text('TRUNCATE TABLE precalc_scores, job_descriptions RESTART IDENTITY CASCADE'))
             db.session.commit()
-            print(f"Deleted {num_jobs} old jobs and {num_scores} old scores.")
+            print("Tables cleared.")
         except Exception as e:
             db.session.rollback()
-            print(f"Error clearing old data: {e}")
+            print(f"Error clearing tables: {e}")
             return
-        
+            
+        # 2. Pre-fetch CVs and encode them ONCE
+        print("Fetching and encoding CVs for matching...")
+        cvs = CVs.query.all()
+        cv_data = []
+        if cvs:
+            cv_texts = [clean_text(cv.raw_text) for cv in cvs]
+            # Convert to list for efficient reuse
+            cv_embeddings = nlp_model.encode(cv_texts, convert_to_tensor=True)
+            cv_ids = [cv.cv_id for cv in cvs]
+            print(f"Encoded {len(cvs)} CVs.")
+        else:
+            print("No CVs found. Skipping match calculation.")
+
+        # 3. Stream Processing
         for index, row in df.iterrows():
-            # Extract fields with safe defaults - Mapped to actual CSV headers
+            # Extract fields...
             company = row.get('Company', None)
             title = row.get('Job Title', 'Unknown Title')
             city = row.get('City', None)
@@ -59,22 +68,19 @@ def populate_jobs():
             raw_text = row.get('Job Description')
             url = row.get('URL', None)
             
-            # Simple validation: Check for NaN or empty string
             if pd.isna(raw_text) or str(raw_text).strip() == '':
-                print(f"Skipping row {index}: Missing raw_text")
                 continue
             
-            # Ensure raw_text is a string
+            # Sanitize
             raw_text = str(raw_text).replace('\x00', '')
             if company: company = str(company).replace('\x00', '')
             if title: title = str(title).replace('\x00', '')
             if city: city = str(city).replace('\x00', '')
             if country: country = str(country).replace('\x00', '')
 
-            # NLP Tokenization (using clean_text from app.py)
+            # Calculate Tokens
             parsed_tokens = clean_text(raw_text)
 
-            # Create Job_Descriptions object
             job = Job_Descriptions(
                 company=company,
                 title=title,
@@ -83,41 +89,82 @@ def populate_jobs():
                 raw_text=raw_text,
                 url=url,
                 parsed_tokens=parsed_tokens,
-                is_intern=False,  # Default
-                active_status=True # Default
+                is_intern=False,
+                active_status=True
             )
             
-            new_objects.append(job)
+            new_jobs_batch.append(job)
 
-            # Batch Insert
-            if len(new_objects) >= BATCH_SIZE:
+            # Process Batch
+            if len(new_jobs_batch) >= BATCH_SIZE:
                 try:
-                    db.session.bulk_save_objects(new_objects)
+                    # A. Insert Jobs and generate IDs
+                    db.session.add_all(new_jobs_batch)
+                    db.session.flush() # Flushes to DB to get IDs, doesn't commit yet
+                    
+                    # B. Calculate Scores for this batch if CVs exist
+                    if cvs and new_jobs_batch:
+                        # Encode current batch of jobs
+                        batch_job_texts = [j.parsed_tokens for j in new_jobs_batch] # Use parsed_tokens as it's already cleaned
+                        batch_job_embeddings = nlp_model.encode(batch_job_texts, convert_to_tensor=True)
+                        
+                        # Calculate Sim Matrix [num_cvs, num_batch_jobs]
+                        cosine_scores = util.cos_sim(cv_embeddings, batch_job_embeddings)
+                        
+                        new_scores = []
+                        for i in range(len(cvs)):
+                            for j in range(len(new_jobs_batch)):
+                                score = float(cosine_scores[i][j])
+                                new_scores.append(Precalc_Scores(
+                                    cv_id=cv_ids[i],
+                                    jd_id=new_jobs_batch[j].jd_id,
+                                    similarity_score=score
+                                ))
+                        
+                        # Bulk save scores
+                        db.session.bulk_save_objects(new_scores)
+
+                    # C. Commit everything
                     db.session.commit()
-                    total_inserted += len(new_objects)
-                    print(f"Inserted batch of {len(new_objects)} jobs. Total: {total_inserted}")
-                    new_objects = [] # Reset batch
+                    total_inserted += len(new_jobs_batch)
+                    print(f"Processed batch of {len(new_jobs_batch)} jobs + scores. Total jobs: {total_inserted}")
+                    new_jobs_batch = [] 
+
                 except Exception as e:
                     db.session.rollback()
-                    print(f"Error inserting batch: {e}")
-                    new_objects = [] # Reset to avoid infinite loop on bad batch
+                    print(f"Error processing batch: {e}")
+                    new_jobs_batch = []
 
-        # Insert remaining
-        if new_objects:
+        # Process Final Batch
+        if new_jobs_batch:
             try:
-                db.session.bulk_save_objects(new_objects)
+                db.session.add_all(new_jobs_batch)
+                db.session.flush()
+                
+                if cvs:
+                    batch_job_texts = [j.parsed_tokens for j in new_jobs_batch]
+                    batch_job_embeddings = nlp_model.encode(batch_job_texts, convert_to_tensor=True)
+                    cosine_scores = util.cos_sim(cv_embeddings, batch_job_embeddings)
+                    
+                    new_scores = []
+                    for i in range(len(cvs)):
+                        for j in range(len(new_jobs_batch)):
+                            score = float(cosine_scores[i][j])
+                            new_scores.append(Precalc_Scores(
+                                cv_id=cv_ids[i],
+                                jd_id=new_jobs_batch[j].jd_id,
+                                similarity_score=score
+                            ))
+                    db.session.bulk_save_objects(new_scores)
+                
                 db.session.commit()
-                total_inserted += len(new_objects)
-                print(f"Inserted final batch. Total: {total_inserted}")
+                total_inserted += len(new_jobs_batch)
+                print(f"Processed final batch. Total: {total_inserted}")
             except Exception as e:
                 db.session.rollback()
-                print(f"Error inserting final batch: {e}")
+                print(f"Error final batch: {e}")
 
-    print("Population complete.")
-    
-    # Trigger Score Refresh
-    print("\nTriggering score refresh...")
-    refresh_all_matches()
+    print("Population and scoring complete.")
 
 if __name__ == "__main__":
     populate_jobs()
