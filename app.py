@@ -166,24 +166,31 @@ def calculate_matches_background(cv_id, cv_text):
         # util.cos_sim returns [1, N]
         scores = util.cos_sim(cv_embedding, job_embeddings)[0]
 
-        # 4. Insert into Precalc_Scores
-        new_scores = []
+        # 4. Prepare Scores List
+        all_scores = []
         for idx, score in enumerate(scores):
             similarity = float(score)
-            new_scores.append(Precalc_Scores(
-                cv_id=cv_id,
-                jd_id=job_ids[idx],
-                similarity_score=similarity
-            ))
+            all_scores.append({
+                'cv_id': cv_id,
+                'jd_id': job_ids[idx],
+                'similarity_score': similarity
+            })
+            
+        # 5. SORT and KEEP TOP 10 ONLY
+        # This drastically reduces DB writes (20k -> 10)
+        top_matches = sorted(all_scores, key=lambda x: x['similarity_score'], reverse=True)[:10]
+
+        # 6. Insert into Precalc_Scores
+        new_scores_objects = [Precalc_Scores(**match) for match in top_matches]
         
         # Batch insert for performance
         try:
             # Clear existing scores for this CV to avoid duplicates if re-running
             Precalc_Scores.query.filter_by(cv_id=cv_id).delete()
             
-            db.session.bulk_save_objects(new_scores)
+            db.session.bulk_save_objects(new_scores_objects)
             db.session.commit()
-            print(f"Successfully calculated and saved {len(new_scores)} matches for CV ID: {cv_id}")
+            print(f"Successfully calculated and saved Top {len(new_scores_objects)} matches for CV ID: {cv_id}")
         except Exception as e:
             db.session.rollback()
             print(f"Error saving scores for CV ID {cv_id}: {e}")
