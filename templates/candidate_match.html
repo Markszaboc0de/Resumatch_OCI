@@ -29,35 +29,28 @@
                         <div class="text-muted">Match Score</div>
                     </div>
                     <div class="col-md-8">
-                        <h5>Candidate Details</h5>
-                        <table class="table">
-                            <tr>
-                                <th>Username:</th>
-                                <td>{{ candidate.username if candidate else 'Unknown' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Email:</th>
-                                <td>{{ candidate.email if candidate else 'Unknown' }}</td>
-                            </tr>
-                            <tr>
-                                <th>CV ID:</th>
-                                <td>{{ cv.cv_id }}</td>
-                            </tr>
-                            <tr>
-                                <th>Uploaded:</th>
-                                <td>{{ cv.upload_date.strftime('%Y-%m-%d') }}</td>
-                            </tr>
-                        </table>
+                        <h5>Candidate Profile</h5>
 
-                        <div class="mt-3">
+                        <div class="alert alert-secondary">
+                            <strong>About the Candidate:</strong><br>
+                            {{ candidate.short_description if candidate.short_description else 'No description
+                            provided.' }}
+                        </div>
+
+                        <div class="mt-4">
+                            {% if has_notified %}
+                            <button class="btn btn-secondary" disabled>Candidate Notified</button>
+                            {% else %}
                             <form
                                 action="{{ url_for('notify_candidate', job_id=job.jd_id, candidate_id=candidate.user_id) }}"
-                                method="POST" class="d-inline">
+                                method="POST" class="d-inline"
+                                onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='Sending...';">
                                 <button type="submit" class="btn btn-warning">I'm Interested - Notify Candidate</button>
                             </form>
-                            <a href="#" class="btn btn-outline-primary"
-                                onclick="alert('Feature to view/download PDF coming soon!')">View Resume (PDF)</a>
-                            <a href="mailto:{{ candidate.email }}" class="btn btn-success">Contact Candidate (Email)</a>
+                            {% endif %}
+                        </div>
+                        <div class="mt-2 text-muted small">
+                            * Contact details are hidden until the candidate responds.
                         </div>
                     </div>
                 </div>

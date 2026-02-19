@@ -26,7 +26,7 @@
                         <h4 class="mb-0">My Profile</h4>
                     </div>
                     <div class="card-body">
-                        <form>
+                        <form method="POST" action="{{ url_for('profile') }}">
                             <div class="row mb-3">
                                 <div class="col">
                                     <label class="form-label">Username</label>
@@ -38,6 +38,12 @@
                                     <input type="text" class="form-control" value="{{ current_user.email }}" disabled>
                                 </div>
                             </div>
+                            <div class="mb-3">
+                                <label class="form-label">Short Bio / Description</label>
+                                <textarea name="short_description" class="form-control" rows="3"
+                                    placeholder="Tell employers a bit about yourself...">{{ current_user.short_description if current_user.short_description else '' }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
                         </form>
 
                         <hr class="my-4">

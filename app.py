@@ -46,6 +46,7 @@ class Users(UserMixin, db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     username = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    short_description = db.Column(db.String(500), nullable=True)
     
     def get_id(self):
         return str(self.user_id)
@@ -475,14 +476,18 @@ def employer_match_candidate(job_id):
         
         # Get User details
         candidate_user = Users.query.get(best_cv.user_id)
-        candidate_email = candidate_user.email if candidate_user else "Unknown Email"
-        candidate_name = candidate_user.username if candidate_user else "Unknown User"
         
+        # Check if already notified
+        has_notified = False
+        if Notifications.query.filter_by(user_id=candidate_user.user_id, employer_id=employer_id, job_id=job_id).first():
+            has_notified = True
+
         return render_template('candidate_match.html', 
                                job=job, 
                                candidate=candidate_user, 
                                score=match_percentage,
-                               cv=best_cv)
+                               cv=best_cv,
+                               has_notified=has_notified)
     else:
         flash('Could not determine a best match.')
     return redirect(url_for('employer_dashboard'))
@@ -696,7 +701,16 @@ def employer():
 def profile():
     user_cvs = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).all()
 
+    user_cvs = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).all()
+
     if request.method == 'POST':
+        # Update Short Description
+        if 'short_description' in request.form:
+            current_user.short_description = request.form.get('short_description')
+            db.session.commit()
+            flash('Profile updated successfully.')
+            return redirect(url_for('profile'))
+
         # Check CV Limit
         if len(user_cvs) >= 5:
             flash('You have reached the limit of 5 CVs. Please delete one to upload a new one.')
