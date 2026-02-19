@@ -10,6 +10,7 @@ from sentence_transformers import SentenceTransformer, util
 import time
 from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_mail import Mail, Message
 
 # Define base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -25,6 +26,15 @@ app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', "postgresql://app_user:Mindenszarhoz@localhost:5432/job_match_db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Flask-Mail Configuration
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', app.config['MAIL_USERNAME'])
+
+mail = Mail(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -67,6 +77,15 @@ class Employers(db.Model):
     username = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     company_name = db.Column(db.String(255), nullable=False)
+    contact_email = db.Column(db.String(255), nullable=True)
+
+class Contact_Requests(db.Model):
+    __tablename__ = 'contact_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    employer_id = db.Column(db.Integer, db.ForeignKey('employers.employer_id'), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job_descriptions.jd_id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Job_Descriptions(db.Model):
     __tablename__ = 'job_descriptions'
@@ -314,13 +333,14 @@ def employer_register():
         username = request.form.get('username')
         password = request.form.get('password')
         company_name = request.form.get('company_name')
+        contact_email = request.form.get('contact_email')
         
         if Employers.query.filter_by(username=username).first():
             flash('Username already exists.')
             return redirect(url_for('employer_register'))
             
         hashed_password = generate_password_hash(password)
-        new_employer = Employers(username=username, password_hash=hashed_password, company_name=company_name)
+        new_employer = Employers(username=username, password_hash=hashed_password, company_name=company_name, contact_email=contact_email)
         db.session.add(new_employer)
         db.session.commit()
         flash('Employer registered. Please log in.')
@@ -473,6 +493,60 @@ def employer_match_candidate(job_id):
     else:
         flash('Could not determine a best match.')
         return redirect(url_for('employer_dashboard'))
+
+@app.route('/employer/connect/<int:job_id>/<int:candidate_id>', methods=['POST'])
+def connect_candidate(job_id, candidate_id):
+    employer_id = session.get('employer_id')
+    if not employer_id: return redirect(url_for('employer_login'))
+    
+    # 1. Fetch Details
+    employer = Employers.query.get(employer_id)
+    job = Job_Descriptions.query.get_or_404(job_id)
+    candidate = Users.query.get_or_404(candidate_id)
+    
+    # 2. Check for duplicate request
+    existing_request = Contact_Requests.query.filter_by(employer_id=employer_id, candidate_id=candidate_id, job_id=job_id).first()
+    if existing_request:
+        flash('You have already contacted this candidate for this job.')
+        return redirect(url_for('employer_match_candidate', job_id=job_id))
+    
+    # 3. Validation
+    if not employer.contact_email:
+        flash('Please add a contact email to your profile before connecting.')
+        return redirect(url_for('employer_dashboard'))
+        
+    if not candidate.email:
+        flash('Candidate has no email address.')
+        return redirect(url_for('employer_match_candidate', job_id=job_id))
+
+    # 4. Construct Email
+    subject = f"Great News! {employer.company_name} is interested in you for {job.title}"
+    body = f"""Hi {candidate.username},
+
+A recruiter at {employer.company_name} reviewed your profile and thinks you would be a great fit for their {job.title} position!
+
+If you are interested, please reply directly to them at: {employer.contact_email}.
+
+Good luck!
+Resumatch Team"""
+
+    # 5. Send Email
+    try:
+        msg = Message(subject, recipients=[candidate.email], body=body)
+        mail.send(msg)
+        
+        # 6. Log Request
+        new_request = Contact_Requests(employer_id=employer_id, candidate_id=candidate_id, job_id=job_id)
+        db.session.add(new_request)
+        db.session.commit()
+        
+        flash('Candidate Notified! Email sent successfully.')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Mail Error: {e}")
+        flash('Error sending email. Please check configuration.')
+        
+    return redirect(url_for('employer_match_candidate', job_id=job_id))
 
 # --- ROUTES ---
 

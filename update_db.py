@@ -2,18 +2,14 @@ from app import app, db
 from sqlalchemy import text
 
 with app.app_context():
-    # 1. Add Employers Table
-    # db.create_all() will create Employers if it doesn't exist
-    print("Creating tables (if not exist)...")
+    print("Creating tables (Contact_Requests if missing)...")
     db.create_all()
     
-    # 2. Add employer_id column to Job_Descriptions if it doesn't exist
-    # Inspecting is hard without inspector, so we'll try to add it and catch error if exists
-    print("Checking for employer_id column...")
+    print("Checking for contact_email column in employers...")
     try:
         with db.engine.connect() as conn:
-            conn.execute(text("ALTER TABLE job_descriptions ADD COLUMN employer_id INTEGER REFERENCES employers(employer_id)"))
+            conn.execute(text("ALTER TABLE employers ADD COLUMN contact_email VARCHAR(255)"))
             conn.commit()
-            print("Added employer_id column.")
+            print("Added contact_email column.")
     except Exception as e:
         print(f"Column likely exists or error: {e}")
