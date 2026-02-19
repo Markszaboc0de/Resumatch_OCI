@@ -513,11 +513,18 @@ def notify_candidate(job_id, candidate_id):
     # 2. Get Details for Message
     employer = Employers.query.get(employer_id)
     job = Job_Descriptions.query.get(job_id)
+    custom_message = request.form.get('custom_message')
     
     # 3. Create Notification
     # "Good news! [Company Name] is interested in your profile for the [Job Title] position. Contact them at [Employer Contact Email]."
     # Note: Employer email isn't in DB schema yet, using username or generic placeholder for now as per prompt instructions
-    msg = f"Good news! {employer.company_name} is interested in your profile for the {job.title} position. Contact them."
+    
+    base_msg = f"Good news! {employer.company_name} is interested in your profile for the {job.title} position."
+    
+    if custom_message:
+        msg = f"{base_msg}\n\nMessage from Employer:\n{custom_message}"
+    else:
+        msg = f"{base_msg} Contact them."
     
     new_notif = Notifications(
         user_id=candidate_id,
