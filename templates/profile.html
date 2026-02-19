@@ -43,6 +43,18 @@
                                 <textarea name="short_description" class="form-control" rows="3"
                                     placeholder="Tell employers a bit about yourself...">{{ current_user.short_description if current_user.short_description else '' }}</textarea>
                             </div>
+
+                            <div class="mb-3 form-check form-switch p-3 bg-light rounded border">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" role="switch"
+                                    id="visibilitySwitch" name="is_visible" {{ 'checked' if current_user.is_visible
+                                    else '' }}>
+                                <label class="form-check-label fw-bold" for="visibilitySwitch"> &nbsp; Profile Active
+                                    (Visible to Employers)</label>
+                                <div class="form-text mt-1">
+                                    If unchecked, you will NOT appear in employer search results or matches.
+                                </div>
+                            </div>
+
                             <button type="submit" class="btn btn-primary">Update Profile</button>
                         </form>
 

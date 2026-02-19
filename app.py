@@ -47,6 +47,7 @@ class Users(UserMixin, db.Model):
     username = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     short_description = db.Column(db.String(500), nullable=True)
+    is_visible = db.Column(db.Boolean, default=True)
     
     def get_id(self):
         return str(self.user_id)
@@ -473,9 +474,11 @@ def employer_match_candidate(job_id):
     job_embedding = nlp_model.encode(job_text, convert_to_tensor=True)
     
     # 2. Get All Candidates
-    cvs = CVs.query.all()
+    # Filter for VISIBLE candidates only
+    cvs = CVs.query.join(Users).filter(CVs.user_id.isnot(None), Users.is_visible == True).all()
+    
     if not cvs:
-        flash('No candidates found in database.')
+        flash('No visible candidates found in database.')
         return redirect(url_for('employer_dashboard'))
         
     cv_texts = [clean_text(cv.raw_text) for cv in cvs]
@@ -729,12 +732,11 @@ def employer():
 def profile():
     user_cvs = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).all()
 
-    user_cvs = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).all()
-
     if request.method == 'POST':
-        # Update Short Description
+        # Update Profile (Description + Visibility)
         if 'short_description' in request.form:
             current_user.short_description = request.form.get('short_description')
+            current_user.is_visible = request.form.get('is_visible') == 'on'
             db.session.commit()
             flash('Profile updated successfully.')
             return redirect(url_for('profile'))
