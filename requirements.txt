@@ -9,4 +9,5 @@ scikit-learn
 sentence-transformers
 flask-login
 python-dotenv
+Flask-Mail
 
