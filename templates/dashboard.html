@@ -14,6 +14,15 @@
             <a class="navbar-brand" href="#">Resumatch</a>
             <div class="d-flex align-items-center">
                 <span class="text-white me-3">Welcome back, {{ current_user.username }}!</span>
+                <a href="{{ url_for('notifications') }}" class="btn btn-outline-light btn-sm me-2 position-relative">
+                    Notifications
+                    {% if unread_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {{ unread_count }}
+                        <span class="visually-hidden">unread messages</span>
+                    </span>
+                    {% endif %}
+                </a>
                 <a href="{{ url_for('profile') }}" class="btn btn-outline-light btn-sm me-2">My Profile</a>
                 <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Log Out</a>
             </div>
