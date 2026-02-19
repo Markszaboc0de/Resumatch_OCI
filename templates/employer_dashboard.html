@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employer Dashboard - Resumatch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">{{ employer.company_name }} - HR Portal</span>
+            <a href="{{ url_for('employer_logout') }}" class="btn btn-outline-light btn-sm">Log Out</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info">{{ messages[0] }}</div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <!-- Job List -->
+            <div class="col-md-8">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Your Job Postings</h4>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createJobModal">
+                        + Post a Job
+                    </button>
+                </div>
+
+                {% if jobs %}
+                <div class="list-group">
+                    {% for job in jobs %}
+                    <div
+                        class="list-group-item d-flex justify-content-between align-items-start {{ 'list-group-item-secondary' if not job.active_status else '' }}">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold">{{ job.title }}</div>
+                            <small>{{ job.city }}, {{ job.country }}</small>
+                            <div class="text-muted small mt-1">
+                                Status:
+                                <span class="badge {{ 'bg-success' if job.active_status else 'bg-secondary' }}">
+                                    {{ 'Active' if job.active_status else 'Inactive' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="{{ url_for('employer_match_candidate', job_id=job.jd_id) }}"
+                                class="btn btn-primary btn-sm">
+                                Find Best Match
+                            </a>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('toggle_job_status', job_id=job.jd_id) }}"
+                                    class="btn btn-outline-warning">
+                                    {{ 'Deactivate' if job.active_status else 'Activate' }}
+                                </a>
+                                <a href="{{ url_for('delete_job', job_id=job.jd_id) }}" class="btn btn-outline-danger"
+                                    onclick="return confirm('Are you sure?')">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No jobs posted yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar / Stats -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Quick Stats</h5>
+                        <p class="card-text">Total Active Jobs: {{ jobs | selectattr('active_status', 'equalto', true) |
+                            list | length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Job Modal -->
+    <div class="modal fade" id="createJobModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Post New Job</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('create_job') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Job Title</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-control">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Country</label>
+                                <input type="text" name="country" class="form-control">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description (Raw Text)</label>
+                            <textarea name="description" class="form-control" rows="5" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact/Application URL</label>
+                            <input type="text" name="url" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Post Job</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

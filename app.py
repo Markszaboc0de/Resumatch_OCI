@@ -61,6 +61,13 @@ class CVs(db.Model):
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
     is_main = db.Column(db.Boolean, default=False)
 
+class Employers(db.Model):
+    __tablename__ = 'employers'
+    employer_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    company_name = db.Column(db.String(255), nullable=False)
+
 class Job_Descriptions(db.Model):
     __tablename__ = 'job_descriptions'
     jd_id = db.Column(db.Integer, primary_key=True)
@@ -73,6 +80,9 @@ class Job_Descriptions(db.Model):
     parsed_tokens = db.Column(db.Text, nullable=True)
     is_intern = db.Column(db.Boolean, default=False)
     active_status = db.Column(db.Boolean, default=True)
+    employer_id = db.Column(db.Integer, db.ForeignKey('employers.employer_id'), nullable=True)
+
+    employer = db.relationship('Employers', backref=db.backref('jobs', lazy=True))
 
 class Precalc_Scores(db.Model):
     __tablename__ = 'precalc_scores'
@@ -272,6 +282,197 @@ def refresh_all_matches():
             except Exception as e:
                 db.session.rollback()
                 print(f"Error saving refresh matches: {e}")
+
+                print(f"Error saving refresh matches: {e}")
+
+# --- EMPLOYER ROUTES ---
+from flask import session
+
+@app.route('/employer/login', methods=['GET', 'POST'])
+def employer_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        employer = Employers.query.filter_by(username=username).first()
+        
+        if employer and check_password_hash(employer.password_hash, password):
+            session['employer_id'] = employer.employer_id
+            session['employer_name'] = employer.company_name # Store separate from user
+            flash(f'Welcome, {employer.company_name}!')
+            return redirect(url_for('employer_dashboard'))
+        else:
+            flash('Invalid employer credentials.')
+            return redirect(url_for('employer_login'))
+            
+    return render_template('employer_login.html')
+
+@app.route('/employer/register', methods=['GET', 'POST'])
+def employer_register():
+    # Helper route to create an employer
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        company_name = request.form.get('company_name')
+        
+        if Employers.query.filter_by(username=username).first():
+            flash('Username already exists.')
+            return redirect(url_for('employer_register'))
+            
+        hashed_password = generate_password_hash(password)
+        new_employer = Employers(username=username, password_hash=hashed_password, company_name=company_name)
+        db.session.add(new_employer)
+        db.session.commit()
+        flash('Employer registered. Please log in.')
+        return redirect(url_for('employer_login'))
+    return render_template('employer_register.html') # Helper template
+
+@app.route('/employer/logout')
+def employer_logout():
+    session.pop('employer_id', None)
+    session.pop('employer_name', None)
+    flash('Logged out from Employer Portal.')
+    return redirect(url_for('landing'))
+
+@app.route('/employer/dashboard')
+def employer_dashboard():
+    employer_id = session.get('employer_id')
+    if not employer_id:
+        flash('Please log in as an employer.')
+        return redirect(url_for('employer_login'))
+        
+    employer = Employers.query.get(employer_id)
+    jobs = Job_Descriptions.query.filter_by(employer_id=employer_id).order_by(Job_Descriptions.jd_id.desc()).all()
+    
+    return render_template('employer_dashboard.html', employer=employer, jobs=jobs)
+
+@app.route('/employer/create_job', methods=['POST'])
+def create_job():
+    employer_id = session.get('employer_id')
+    if not employer_id:
+        return redirect(url_for('employer_login'))
+        
+    title = request.form.get('title')
+    city = request.form.get('city')
+    country = request.form.get('country')
+    description = request.form.get('description')
+    url = request.form.get('url')
+    
+    # Auto-fill company name
+    employer = Employers.query.get(employer_id)
+    company = employer.company_name
+    
+    # NLP Processing
+    parsed_tokens = clean_text(description)
+    
+    new_job = Job_Descriptions(
+        title=title,
+        city=city,
+        country=country,
+        company=company,
+        raw_text=description,
+        url=url,
+        parsed_tokens=parsed_tokens,
+        employer_id=employer_id,
+        active_status=True
+    )
+    
+    try:
+        db.session.add(new_job)
+        db.session.commit()
+        flash('Job posted successfully!')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error posting job: {e}')
+        
+    return redirect(url_for('employer_dashboard'))
+
+@app.route('/employer/toggle_status/<int:job_id>')
+def toggle_job_status(job_id):
+    employer_id = session.get('employer_id')
+    if not employer_id: return redirect(url_for('employer_login'))
+    
+    job = Job_Descriptions.query.get_or_404(job_id)
+    if job.employer_id != employer_id:
+        flash('Unauthorized.')
+        return redirect(url_for('employer_dashboard'))
+        
+    job.active_status = not job.active_status
+    db.session.commit()
+    return redirect(url_for('employer_dashboard'))
+
+@app.route('/employer/delete_job/<int:job_id>')
+def delete_job(job_id):
+    employer_id = session.get('employer_id')
+    if not employer_id: return redirect(url_for('employer_login'))
+    
+    job = Job_Descriptions.query.get_or_404(job_id)
+    if job.employer_id != employer_id:
+        flash('Unauthorized.')
+        return redirect(url_for('employer_dashboard'))
+        
+    # Also delete associated scores? Yes, cascaded in DB or manual
+    # Precalc_Scores has foreign key to jd_id, need to check cascade rule or delete manually
+    Precalc_Scores.query.filter_by(jd_id=job_id).delete()
+    
+    db.session.delete(job)
+    db.session.commit()
+    flash('Job deleted.')
+    return redirect(url_for('employer_dashboard'))
+
+@app.route('/employer/match/<int:job_id>')
+def employer_match_candidate(job_id):
+    employer_id = session.get('employer_id')
+    if not employer_id: return redirect(url_for('employer_login'))
+    
+    job = Job_Descriptions.query.get_or_404(job_id)
+    if job.employer_id != employer_id:
+        flash('Unauthorized.')
+        return redirect(url_for('employer_dashboard'))
+    
+    # 1. Get Job Text/Embedding
+    job_text = clean_text(job.raw_text)
+    job_embedding = nlp_model.encode(job_text, convert_to_tensor=True)
+    
+    # 2. Get All Candidates
+    cvs = CVs.query.all()
+    if not cvs:
+        flash('No candidates found in database.')
+        return redirect(url_for('employer_dashboard'))
+        
+    cv_texts = [clean_text(cv.raw_text) for cv in cvs]
+    cv_embeddings = nlp_model.encode(cv_texts, convert_to_tensor=True)
+    
+    # 3. Compute Similarity
+    # job_embedding: [1, 384], cv_embeddings: [N, 384]
+    scores = util.cos_sim(job_embedding, cv_embeddings)[0] # [N]
+    
+    # 4. Find Best Match
+    best_score = -1.0
+    best_cv_index = -1
+    
+    for i, score in enumerate(scores):
+        if score > best_score:
+            best_score = score
+            best_cv_index = i
+            
+    if best_cv_index != -1:
+        best_cv = cvs[best_cv_index]
+        match_percentage = round(float(best_score) * 100, 1)
+        
+        # Get User details
+        candidate_user = Users.query.get(best_cv.user_id)
+        candidate_email = candidate_user.email if candidate_user else "Unknown Email"
+        candidate_name = candidate_user.username if candidate_user else "Unknown User"
+        
+        return render_template('candidate_match.html', 
+                               job=job, 
+                               candidate=candidate_user, 
+                               score=match_percentage,
+                               cv=best_cv)
+    else:
+        flash('Could not determine a best match.')
+        return redirect(url_for('employer_dashboard'))
 
 # --- ROUTES ---
 
