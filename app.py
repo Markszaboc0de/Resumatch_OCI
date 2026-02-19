@@ -446,6 +446,9 @@ def delete_job(job_id):
     # Precalc_Scores has foreign key to jd_id, need to check cascade rule or delete manually
     Precalc_Scores.query.filter_by(jd_id=job_id).delete()
     
+    # Also delete associated notifications
+    Notifications.query.filter_by(job_id=job_id).delete()
+    
     db.session.delete(job)
     db.session.commit()
     flash('Job deleted.')
