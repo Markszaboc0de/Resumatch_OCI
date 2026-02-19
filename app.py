@@ -71,6 +71,7 @@ class Employers(db.Model):
     username = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     company_name = db.Column(db.String(255), nullable=False)
+    contact_info = db.Column(db.Text, nullable=True)
 
 class Job_Descriptions(db.Model):
     __tablename__ = 'job_descriptions'
@@ -360,6 +361,22 @@ def employer_dashboard():
     
     return render_template('employer_dashboard.html', employer=employer, jobs=jobs)
 
+@app.route('/employer/update_profile', methods=['POST'])
+def employer_update_profile():
+    employer_id = session.get('employer_id')
+    if not employer_id:
+        return redirect(url_for('employer_login'))
+        
+    employer = Employers.query.get(employer_id)
+    if employer:
+        employer.company_name = request.form.get('company_name')
+        employer.contact_info = request.form.get('contact_info')
+        db.session.commit()
+        session['employer_name'] = employer.company_name # Update session name
+        flash('Company profile updated.')
+        
+    return redirect(url_for('employer_dashboard'))
+
 @app.route('/employer/create_job', methods=['POST'])
 def create_job():
     employer_id = session.get('employer_id')
@@ -513,18 +530,15 @@ def notify_candidate(job_id, candidate_id):
     # 2. Get Details for Message
     employer = Employers.query.get(employer_id)
     job = Job_Descriptions.query.get(job_id)
-    custom_message = request.form.get('custom_message')
+    # custom_message removed in favor of persistent contact_info
     
     # 3. Create Notification
-    # "Good news! [Company Name] is interested in your profile for the [Job Title] position. Contact them at [Employer Contact Email]."
-    # Note: Employer email isn't in DB schema yet, using username or generic placeholder for now as per prompt instructions
-    
     base_msg = f"Good news! {employer.company_name} is interested in your profile for the {job.title} position."
     
-    if custom_message:
-        msg = f"{base_msg}\n\nMessage from Employer:\n{custom_message}"
+    if employer.contact_info:
+        msg = f"{base_msg}\n\nContact Details:\n{employer.contact_info}"
     else:
-        msg = f"{base_msg} Contact them."
+        msg = f"{base_msg} Please contact them."
     
     new_notif = Notifications(
         user_id=candidate_id,
