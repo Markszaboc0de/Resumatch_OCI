@@ -581,6 +581,30 @@ def view_matches(cv_id):
 
     return render_template('job_seeker.html', matches=matches, cv_id=cv_id) 
 
+@app.route('/api/suggestions')
+def suggestions():
+    field = request.args.get('field')
+    query = request.args.get('query', '')
+    
+    if not field or len(query) < 1:
+        return jsonify([])
+    
+    column = None
+    if field == 'city':
+        column = Job_Descriptions.city
+    elif field == 'country':
+        column = Job_Descriptions.country
+    elif field == 'company':
+        column = Job_Descriptions.company
+        
+    if column:
+        results = db.session.query(column).filter(column.ilike(f'%{query}%')).distinct().limit(10).all()
+        # results is a list of tuples, e.g. [('London',), ('New York',)]
+        suggestions = [r[0] for r in results if r[0]]
+        return jsonify(suggestions)
+    
+    return jsonify([]) 
+
 # Initialize DB
 with app.app_context():
     db.create_all()
