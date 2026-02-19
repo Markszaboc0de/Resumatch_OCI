@@ -31,26 +31,57 @@
 
         <h3 class="mb-3">Job Board</h3>
 
-        <!-- Search bar (Visual placeholder functionality for now as per instructions) -->
-        <div class="input-group mb-4">
-            <input type="text" class="form-control" placeholder="Search for jobs...">
-            <button class="btn btn-primary" type="button">Search</button>
-        </div>
+        <!-- Filter Form -->
+        <form method="GET" action="{{ url_for('dashboard') }}" class="mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="search" placeholder="Search (Keyword)" value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="country" placeholder="Country" value="{{ country_filter }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="city" placeholder="City" value="{{ city_filter }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control" name="company" placeholder="Company" value="{{ company_filter }}">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </div>
+        </form>
 
         <table class="table table-bordered table-striped">
             <thead class="table-dark">
                 <tr>
-                    <th>ID</th>
                     <th>Title</th>
+                    <th>Company</th>
+                    <th>Location</th>
                     <th>Description</th>
+                    <th>Link</th>
                 </tr>
             </thead>
             <tbody>
                 {% for job in jobs %}
                 <tr>
-                    <td>{{ job.jd_id }}</td>
                     <td>{{ job.title }}</td>
-                    <td>{{ job.raw_text | safe }}</td>
+                    <td>{{ job.company }}</td>
+                    <td>
+                        {{ job.city if job.city else '' }}{% if job.city and job.country %}, {% endif %}{{ job.country if job.country else '' }}
+                    </td>
+                    <td>
+                        <div title="{{ job.raw_text }}">
+                            {{ job.raw_text | truncate(150) }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if job.url %}
+                        <a href="{{ job.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Visit</a>
+                        {% else %}
+                        <span class="text-muted">No Link</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

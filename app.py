@@ -349,10 +349,28 @@ def dashboard():
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    pagination = Job_Descriptions.query.paginate(page=page, per_page=per_page, error_out=False)
+    # Filter Parameters
+    search_query = request.args.get('search', '')
+    country_filter = request.args.get('country', '')
+    city_filter = request.args.get('city', '')
+    company_filter = request.args.get('company', '')
+
+    query = Job_Descriptions.query.filter_by(active_status=True)
+
+    if search_query:
+        query = query.filter(Job_Descriptions.raw_text.ilike(f'%{search_query}%') | Job_Descriptions.title.ilike(f'%{search_query}%'))
+    if country_filter:
+        query = query.filter(Job_Descriptions.country.ilike(f'%{country_filter}%'))
+    if city_filter:
+        query = query.filter(Job_Descriptions.city.ilike(f'%{city_filter}%'))
+    if company_filter:
+        query = query.filter(Job_Descriptions.company.ilike(f'%{company_filter}%'))
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     current_jobs = pagination.items
     
-    return render_template('dashboard.html', jobs=current_jobs, page=page, total_pages=pagination.pages, has_next=pagination.has_next, has_prev=pagination.has_prev)
+    return render_template('dashboard.html', jobs=current_jobs, page=page, total_pages=pagination.pages, has_next=pagination.has_next, has_prev=pagination.has_prev,
+                           search_query=search_query, country_filter=country_filter, city_filter=city_filter, company_filter=company_filter)
 
 @app.route('/listings')
 def listings():
@@ -361,10 +379,28 @@ def listings():
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    pagination = Job_Descriptions.query.paginate(page=page, per_page=per_page, error_out=False)
+    # Filter Parameters
+    search_query = request.args.get('search', '')
+    country_filter = request.args.get('country', '')
+    city_filter = request.args.get('city', '')
+    company_filter = request.args.get('company', '')
+
+    query = Job_Descriptions.query.filter_by(active_status=True)
+
+    if search_query:
+        query = query.filter(Job_Descriptions.raw_text.ilike(f'%{search_query}%') | Job_Descriptions.title.ilike(f'%{search_query}%'))
+    if country_filter:
+        query = query.filter(Job_Descriptions.country.ilike(f'%{country_filter}%'))
+    if city_filter:
+        query = query.filter(Job_Descriptions.city.ilike(f'%{city_filter}%'))
+    if company_filter:
+        query = query.filter(Job_Descriptions.company.ilike(f'%{company_filter}%'))
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     current_jobs = pagination.items
     
-    return render_template('listings.html', jobs=current_jobs, page=page, total_pages=pagination.pages, has_next=pagination.has_next, has_prev=pagination.has_prev)
+    return render_template('listings.html', jobs=current_jobs, page=page, total_pages=pagination.pages, has_next=pagination.has_next, has_prev=pagination.has_prev,
+                           search_query=search_query, country_filter=country_filter, city_filter=city_filter, company_filter=company_filter)
 
 
 @app.route('/employer')
