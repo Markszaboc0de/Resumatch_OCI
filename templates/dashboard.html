@@ -90,7 +90,8 @@
                     </td>
                     <td>
                         {% if job.url %}
-                        <a href="{{ job.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Visit</a>
+                        <a href="{{ job.url if job.url.startswith('http') else 'http://' + job.url }}" target="_blank"
+                            class="btn btn-sm btn-outline-primary">Visit</a>
                         {% else %}
                         <span class="text-muted">No Link</span>
                         {% endif %}

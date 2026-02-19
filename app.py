@@ -389,6 +389,10 @@ def create_job():
     description = request.form.get('description')
     url = request.form.get('url')
     
+    # Ensure URL has protocol
+    if url and not url.startswith(('http://', 'https://')):
+        url = 'http://' + url
+    
     # Auto-fill company name
     employer = Employers.query.get(employer_id)
     company = employer.company_name
