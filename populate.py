@@ -34,12 +34,13 @@ def populate_jobs():
     with app.app_context():
         print("Connected to database.")
 
-        # 1. Fast Clear with TRUNCATE
+        # 1. Fast Clear with DELETE
         try:
-            print("Clearing tables with TRUNCATE...")
-            db.session.execute(text('TRUNCATE TABLE precalc_scores, job_descriptions RESTART IDENTITY CASCADE'))
+            print("Clearing CSV jobs and scores...")
+            db.session.execute(text('DELETE FROM precalc_scores'))
+            db.session.execute(text('DELETE FROM job_descriptions WHERE employer_id IS NULL'))
             db.session.commit()
-            print("Tables cleared.")
+            print("CSV Jobs and scores cleared.")
         except Exception as e:
             db.session.rollback()
             print(f"Error clearing tables: {e}")
