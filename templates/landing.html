@@ -6,42 +6,179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumatch - Welcome</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .hero {
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #f7f9fc;
+            border-right: 1px solid #edf1f7;
+            padding: 24px;
+            position: fixed;
             height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.5rem;
+            color: #2b6cb0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background-color: #fafafa;
         }
 
         .hero-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 1rem;
+            background: #ffffff;
+            padding: 3rem;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .hero-title {
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .btn-custom {
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .content-area {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="hero">
-        <div class="position-absolute top-0 end-0 p-3">
-            <a href="{{ url_for('employer_login') }}" class="text-white text-decoration-none small opacity-75">Employer
-                Login</a>
-        </div>
-        <div class="hero-card">
-            <h1 class="display-4 mb-4">Welcome to Resumatch</h1>
-            <div class="d-grid gap-3 col-12 mx-auto">
-                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">Register</a>
-                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">Log In</a>
-                <a href="{{ url_for('listings') }}" class="btn btn-link text-white mt-2">Continue without logging in</a>
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+                <i class="bi bi-infinity"></i>
+                Resumatch
+            </a>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="px-3 text-muted"
+                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">Navigation</span>
+                </li>
+                <li class="mt-2">
+                    <a href="{{ url_for('listings') }}">
+                        <i class="bi bi-grid-fill"></i> Job Board
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('login') }}">
+                        <i class="bi bi-box-arrow-in-right"></i> Log In
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('register') }}">
+                        <i class="bi bi-person-plus-fill"></i> Register
+                    </a>
+                </li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('employer_login') }}" class="text-muted">
+                        <i class="bi bi-building"></i> Employer Portal
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="hero-card">
+                <h1 class="hero-title">Welcome to Resumatch</h1>
+                <p class="text-muted mb-4">The intelligent job matching platform that connects top talent with their
+                    dream roles effortlessly.</p>
+                <div class="d-grid gap-3 col-12 mx-auto">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-custom shadow-sm">Register as
+                        Candidate</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-custom">Log In</a>
+                    <a href="{{ url_for('listings') }}" class="mt-3 text-muted"
+                        style="text-decoration: underline; font-size: 0.9rem;">Browse jobs without logging in</a>
+                </div>
             </div>
-        </div>
+        </main>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
