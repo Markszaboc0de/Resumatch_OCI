@@ -9,7 +9,7 @@ from sentence_transformers import util
 # Load environment variables
 load_dotenv()
 
-CSV_FILE = 'jobs_data.csv'
+CSV_FILE = 'Elso.csv'
 BATCH_SIZE = 100
 
 def populate_jobs():
