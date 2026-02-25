@@ -259,68 +259,72 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <script id="job-map-data" type="application/json">
+        {{ map_data | safe }}
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Safely inject location data from Flask
-            const mapData = {{ map_data | safe
-        }};
+            // Safely parse injected JSON data
+            const rawMapData = document.getElementById('job-map-data').textContent;
+            const mapData = JSON.parse(rawMapData || "{}");
 
-        // Initialize Map focused roughly on Europe/Global center
-        const map = L.map('map-container').setView([48.0, 10.0], 4);
+            // Initialize Map focused roughly on Europe/Global center
+            const map = L.map('map-container').setView([48.0, 10.0], 4);
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(map);
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
 
-        let markerBounds = [];
+            let markerBounds = [];
 
-        // Loop through our grouped map data
-        for (const [locationKey, data] of Object.entries(mapData)) {
-            const lat = data.lat;
-            const lon = data.lon;
-            const jobs = data.jobs;
+            // Loop through our grouped map data
+            for (const [locationKey, data] of Object.entries(mapData)) {
+                const lat = data.lat;
+                const lon = data.lon;
+                const jobs = data.jobs;
 
-            // Track bounds to auto-fit map later
-            markerBounds.push([lat, lon]);
+                // Track bounds to auto-fit map later
+                markerBounds.push([lat, lon]);
 
-            // Build popup content
-            let popupHtml = `<div class="popup-title"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${locationKey}</div>`;
-            popupHtml += `<div style="max-height: 200px; overflow-y: auto; padding-right: 5px;">`;
+                // Build popup content
+                let popupHtml = `<div class="popup-title"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${locationKey}</div>`;
+                popupHtml += `<div style="max-height: 200px; overflow-y: auto; padding-right: 5px;">`;
 
-            jobs.forEach(job => {
-                const applyBtn = job.url ? `<a href="${job.url}" target="_blank" class="btn btn-sm btn-outline-primary mt-1 w-100"><i class="bi bi-box-arrow-up-right me-1"></i>Apply/Visit</a>` : '';
-                popupHtml += `
+                jobs.forEach(job => {
+                    const applyBtn = job.url ? `<a href="${job.url}" target="_blank" class="btn btn-sm btn-outline-primary mt-1 w-100"><i class="bi bi-box-arrow-up-right me-1"></i>Apply/Visit</a>` : '';
+                    popupHtml += `
                         <div class="popup-job">
                             <div class="popup-company">${job.company || 'Unknown Company'}</div>
                             <div class="popup-job-title">${job.title}</div>
                             ${applyBtn}
                         </div>
                     `;
-            });
-            popupHtml += `</div>`;
+                });
+                popupHtml += `</div>`;
 
-            // Create custom marker icon using Bootstrap icons
-            const customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color: #2b6cb0; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"><i class="bi bi-briefcase-fill" style="font-size: 0.8rem;"></i></div>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15],
-                popupAnchor: [0, -15]
-            });
+                // Create custom marker icon using Bootstrap icons
+                const customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color: #2b6cb0; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"><i class="bi bi-briefcase-fill" style="font-size: 0.8rem;"></i></div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15],
+                    popupAnchor: [0, -15]
+                });
 
-            // Add Marker
-            L.marker([lat, lon], { icon: customIcon })
-                .addTo(map)
-                .bindPopup(popupHtml, { maxWidth: 300, minWidth: 250 });
-        }
+                // Add Marker
+                L.marker([lat, lon], { icon: customIcon })
+                    .addTo(map)
+                    .bindPopup(popupHtml, { maxWidth: 300, minWidth: 250 });
+            }
 
-        // Auto fit bounds if we have markers
-        if (markerBounds.length > 0) {
-            map.fitBounds(markerBounds, { padding: [50, 50], maxZoom: 10 });
-        }
+            // Auto fit bounds if we have markers
+            if (markerBounds.length > 0) {
+                map.fitBounds(markerBounds, { padding: [50, 50], maxZoom: 10 });
+            }
         });
     </script>
 </body>

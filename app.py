@@ -723,8 +723,15 @@ def listings():
 
 @app.route('/map')
 def job_map():
-    # Only show active jobs
-    jobs = Job_Descriptions.query.filter_by(active_status=True).all()
+    # Only show active jobs. Use direct session query to bypass missing employer_id column crashes
+    jobs = db.session.query(
+        Job_Descriptions.jd_id, 
+        Job_Descriptions.title, 
+        Job_Descriptions.company, 
+        Job_Descriptions.url, 
+        Job_Descriptions.city, 
+        Job_Descriptions.country
+    ).filter(Job_Descriptions.active_status == True).all()
     
     # Load cache
     cache = {}
