@@ -66,8 +66,8 @@ def populate_jobs():
             title = row.get('Job Title', 'Unknown Title')
 
             # Filter: Only process 'intern' jobs
-            if 'intern' not in str(title).lower():
-                continue
+            #  if 'intern' not in str(title).lower():
+             #     continue
             city = row.get('City', None)
             country = row.get('Country', None)
             raw_text = row.get('Job Description')
