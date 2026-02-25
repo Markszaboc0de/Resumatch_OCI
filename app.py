@@ -474,8 +474,7 @@ def employer_match_candidate(job_id):
     job_embedding = nlp_model.encode(job_text, convert_to_tensor=True)
     
     # 2. Get All Candidates
-    # Filter for VISIBLE candidates only
-    cvs = CVs.query.join(Users, CVs.user_id == Users.user_id).filter(CVs.user_id.isnot(None), Users.is_visible == True).all()
+    cvs = db.session.query(CVs).join(Users, CVs.user_id == Users.user_id).filter(CVs.user_id.isnot(None), Users.is_visible == True).all()
     
     if not cvs:
         flash('No visible candidates found in database.')
