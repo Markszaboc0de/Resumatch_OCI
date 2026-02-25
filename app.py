@@ -475,7 +475,7 @@ def employer_match_candidate(job_id):
     
     # 2. Get All Candidates
     # Filter for VISIBLE candidates only
-    cvs = CVs.query.join(Users).filter(CVs.user_id.isnot(None), Users.is_visible == True).all()
+    cvs = CVs.query.join(Users, CVs.user_id == Users.user_id).filter(CVs.user_id.isnot(None), Users.is_visible == True).all()
     
     if not cvs:
         flash('No visible candidates found in database.')
