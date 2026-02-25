@@ -6,105 +6,447 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumatch - Job Listings</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #f7f9fc;
+            border-right: 1px solid #edf1f7;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.5rem;
+            color: #2b6cb0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
+            padding: 40px 60px;
+            max-width: 1200px;
+        }
+
+        /* Header */
+        .header-section {
+            text-align: right;
+            margin-bottom: 40px;
+        }
+
+        .header-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        /* Search Bar */
+        .search-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            align-items: center;
+        }
+
+        .search-form-wrapper {
+            display: flex;
+            flex: 1;
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .search-input-group {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            padding: 0 16px;
+        }
+
+        .search-input-group i {
+            color: #a0aec0;
+            font-size: 1.1rem;
+        }
+
+        .search-input {
+            border: none;
+            background: transparent;
+            padding: 10px 12px;
+            flex: 1;
+            font-size: 0.95rem;
+            color: #4a5568;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .search-input:focus {
+            box-shadow: none;
+            outline: none;
+            background: transparent;
+        }
+
+        .divider {
+            width: 1px;
+            background-color: #e2e8f0;
+            margin: 8px 0;
+        }
+
+        .btn-filter {
+            background-color: #2c7a7b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 24px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-filter:hover {
+            background-color: #285e61;
+            color: white;
+        }
+
+        /* Job Cards */
+        .job-card {
+            display: flex;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            background: white;
+            transition: box-shadow 0.2s, transform 0.2s;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .job-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .job-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%);
+        }
+
+        .job-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr auto;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .job-description-row {
+            grid-column: 1 / -1;
+            margin-top: 12px;
+            color: #4a5568;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .job-company,
+        .job-title-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .company-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        .job-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #4a5568;
+            margin: 0;
+        }
+
+        .custom-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 500;
+            width: fit-content;
+        }
+
+        .btn-visit {
+            background-color: transparent;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-visit:hover {
+            background-color: #f7fafc;
+            color: #2b6cb0;
+            border-color: #cbd5e0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .job-content {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .job-description-row {
+                margin-top: 4px;
+            }
+
+            .search-form-wrapper {
+                flex-direction: column;
+            }
+
+            .divider {
+                width: 100%;
+                height: 1px;
+                margin: 0;
+            }
+
+            .content-area {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+                <i class="bi bi-infinity"></i>
+                Resumatch
+            </a>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('landing') }}">Resumatch</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('listings') }}">Database
-                            Listing</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container mt-5">
-        <h1 class="mb-4">Current Job Listings</h1>
-        <!-- Filter Form -->
-        <form method="GET" action="{{ url_for('listings') }}" class="mb-4">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <input type="text" class="form-control" name="search" placeholder="Search (Keyword)"
-                        value="{{ search_query }}">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" name="country" placeholder="Country"
-                        value="{{ country_filter }}">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" name="city" placeholder="City" value="{{ city_filter }}">
-                </div>
-                <div class="col-md-2">
-                    <input type="text" class="form-control" name="company" placeholder="Company"
-                        value="{{ company_filter }}">
-                </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-primary w-100">Filter</button>
-                </div>
-            </div>
-        </form>
-
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Title</th>
-                    <th>Company</th>
-                    <th>Location</th>
-                    <th>Description</th>
-                    <th>Link</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for job in jobs %}
-                <tr>
-                    <td>{{ job.title }}</td>
-                    <td>{{ job.company }}</td>
-                    <td>
-                        {{ job.city if job.city else '' }}{% if job.city and job.country %}, {% endif %}{{ job.country
-                        if job.country else '' }}
-                    </td>
-                    <td>
-                        <div title="{{ job.raw_text | striptags }}">
-                            {{ job.raw_text | striptags | truncate(150) }}
-                        </div>
-                    </td>
-                    <td>
-                        {% if job.url %}
-                        <a href="{{ job.url if job.url.startswith('http') else 'http://' + job.url }}" target="_blank"
-                            class="btn btn-sm btn-outline-primary">Visit</a>
-                        {% else %}
-                        <span class="text-muted">No Link</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- Pagination Controls -->
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-                <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('listings', page=page-1) }}" tabindex="-1">Previous</a>
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="px-3 text-muted"
+                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">Navigation</span>
                 </li>
-
-                <li class="page-item disabled">
-                    <span class="page-link">Page {{ page }} of {{ total_pages }}</span>
+                <li class="mt-2">
+                    <a href="{{ url_for('listings') }}" class="active">
+                        <i class="bi bi-grid-fill"></i> Job Board
+                    </a>
                 </li>
-
-                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                    <a class="page-link" href="{{ url_for('listings', page=page+1) }}">Next</a>
+                <li>
+                    <a href="{{ url_for('login') }}">
+                        <i class="bi bi-box-arrow-in-right"></i> Log In
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('register') }}">
+                        <i class="bi bi-person-plus-fill"></i> Register
+                    </a>
                 </li>
             </ul>
-        </nav>
+        </aside>
 
-        <div class="mt-4">
-            <a href="{{ url_for('landing') }}" class="btn btn-secondary">Back to Home</a>
-        </div>
+        <!-- Main Content -->
+        <main class="content-area">
+            <!-- Header -->
+            <div class="header-section">
+                <h1 class="header-title">InterBridge</h1>
+                <p class="header-subtitle">Let's find your next job</p>
+            </div>
+
+            <!-- Search Area -->
+            <form method="GET" action="{{ url_for('listings') }}" class="search-container">
+                <div class="search-form-wrapper">
+                    <div class="search-input-group" style="flex: 2;">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="search-input" name="search" placeholder="Search Role or Description"
+                            value="{{ search_query }}">
+                    </div>
+                    <div class="divider"></div>
+                    <div class="search-input-group">
+                        <i class="bi bi-geo-alt"></i>
+                        <input type="text" class="search-input" name="country" placeholder="Country"
+                            value="{{ country_filter }}">
+                    </div>
+                    <div class="divider"></div>
+                    <div class="search-input-group">
+                        <i class="bi bi-building"></i>
+                        <input type="text" class="search-input" name="company" placeholder="Company"
+                            value="{{ company_filter }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn-filter">Filter</button>
+            </form>
+
+            <!-- Job Cards List -->
+            <div class="job-list">
+                {% set gradients = [
+                'linear-gradient(135deg, #fceabb 0%, #f8b500 100%)',
+                'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)',
+                'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+                'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
+                'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)',
+                'linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)'
+                ] %}
+
+                {% for job in jobs %}
+                <div class="job-card">
+                    <div class="job-image" style="background: {{ gradients | random }};"></div>
+
+                    <div class="job-content">
+                        <!-- Company Col -->
+                        <div class="job-company">
+                            <h3 class="company-name">{{ job.company }}</h3>
+                            {% if job.country %}
+                            <span class="custom-badge">{{ job.country }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Title Col -->
+                        <div class="job-title-col">
+                            <h3 class="job-title">{{ job.title }}</h3>
+                            {% if job.city %}
+                            <span class="custom-badge">{{ job.city }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Action Col -->
+                        <div class="job-action text-end">
+                            {% if job.url %}
+                            <a href="{{ job.url if job.url.startswith('http') else 'http://' + job.url }}"
+                                target="_blank" class="btn-visit">Visit</a>
+                            {% else %}
+                            <span class="btn-visit" style="opacity: 0.5; pointer-events: none;">No Link</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description Row (Spans all columns) -->
+                        <div class="job-description-row">
+                            {{ job.raw_text | striptags | truncate(250) }}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                    <h4>No jobs found</h4>
+                    <p>Try adjusting your search filters to find more results.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination Controls -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('listings', page=page-1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}"
+                            tabindex="-1">Previous</a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Page {{ page }} of {{ total_pages }}</span>
+                    </li>
+
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('listings', page=page+1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </main>
     </div>
 
     <!-- Autocomplete Datalists -->
@@ -123,7 +465,7 @@
 
                 if (input && datalist) {
                     input.setAttribute('list', `${field}_list`);
-                    input.setAttribute('autocomplete', 'off'); // Disable browser default autocomplete
+                    input.setAttribute('autocomplete', 'off');
 
                     input.addEventListener('input', function () {
                         const query = this.value;
