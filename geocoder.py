@@ -52,11 +52,11 @@ def build_location_cache():
         print(f"Found {len(locations)} unique locations.")
         
         updates = 0
-        for city, country in locations:
+        for i, (city, country) in enumerate(locations):
             key = f"{city},{country}" if country else f"{city}"
             
             if key not in cache:
-                print(f"Geocoding: {key}...")
+                print(f"[{i+1}/{len(locations)}] Geocoding: {key}...")
                 lat, lon = geocode_location(city, country)
                 
                 if lat is not None and lon is not None:
@@ -65,13 +65,19 @@ def build_location_cache():
                 else:
                     cache[key] = None # Mark as failed to avoid re-querying every time unless cleared
                 
-                # Sleep briefly to respect API rate limits (Open Meteo allows ~10,000 requests/day, but good practice)
+                # Save periodically every 20 locations
+                if updates > 0 and updates % 20 == 0:
+                    with open(CACHE_FILE, 'w') as f:
+                        json.dump(cache, f, indent=4)
+                    print(f"--- Saved intermediate cache ({updates} updates) ---")
+                
+                # Sleep briefly to respect API rate limits
                 time.sleep(0.5)
                 
         if updates > 0:
             with open(CACHE_FILE, 'w') as f:
                 json.dump(cache, f, indent=4)
-            print(f"Saved {updates} new locations to cache.")
+            print(f"Saved final {updates} new locations to cache.")
         else:
             print("No new locations to cache.")
 
