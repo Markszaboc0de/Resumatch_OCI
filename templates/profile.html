@@ -6,120 +6,354 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumatch - My Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #f7f9fc;
+            border-right: 1px solid #edf1f7;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.5rem;
+            color: #2b6cb0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
+            padding: 40px 60px;
+            max-width: 1000px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 32px;
+            letter-spacing: -0.5px;
+        }
+
+        .form-card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            margin-bottom: 24px;
+        }
+
+        .form-card-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .custom-input {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 10px 14px;
+            background-color: #f7fafc;
+            font-size: 0.95rem;
+        }
+
+        .custom-input:focus {
+            background-color: #ffffff;
+            border-color: #cbd5e0;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+        }
+
+        .btn-custom {
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        /* Resume List Items */
+        .resume-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background-color: #ffffff;
+            transition: all 0.2s;
+        }
+
+        .resume-item:hover {
+            border-color: #cbd5e0;
+            background-color: #f7fafc;
+        }
+
+        .resume-icon {
+            font-size: 1.5rem;
+            color: #e53e3e;
+            margin-right: 16px;
+        }
+
+        .resume-details {
+            flex: 1;
+        }
+
+        .resume-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .content-area {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .resume-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .resume-actions {
+                width: 100%;
+                display: flex;
+                gap: 8px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">Resumatch</a>
-            <div class="d-flex align-items-center">
-                <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Log Out</a>
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+                <i class="bi bi-infinity"></i>
+                Resumatch
+            </a>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="px-3 text-muted"
+                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">Navigation</span>
+                </li>
+                <li class="mt-2">
+                    <a href="{{ url_for('dashboard') }}">
+                        <i class="bi bi-grid-fill"></i> Job Board
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('profile') }}" class="active">
+                        <i class="bi bi-person-circle"></i> My Profile
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('notifications') }}">
+                        <i class="bi bi-bell-fill"></i> Notifications
+                    </a>
+                </li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('logout') }}" class="text-danger">
+                        <i class="bi bi-box-arrow-left"></i> Log Out
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <h1 class="header-title">Account Settings</h1>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                {{ messages[0] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-        </div>
-    </nav>
+            {% endif %}
+            {% endwith %}
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">My Profile</h4>
+            <div class="form-card">
+                <div class="form-card-header">Personal Information</div>
+                <form method="POST" action="{{ url_for('profile') }}">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold small">Username</label>
+                            <input type="text" class="form-control custom-input" value="{{ current_user.username }}"
+                                disabled>
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            <label class="form-label text-muted fw-semibold small">Email Address</label>
+                            <input type="text" class="form-control custom-input" value="{{ current_user.email }}"
+                                disabled>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ url_for('profile') }}">
-                            <div class="row mb-3">
-                                <div class="col">
-                                    <label class="form-label">Username</label>
-                                    <input type="text" class="form-control" value="{{ current_user.username }}"
-                                        disabled>
-                                </div>
-                                <div class="col">
-                                    <label class="form-label">Email</label>
-                                    <input type="text" class="form-control" value="{{ current_user.email }}" disabled>
-                                </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-semibold small">Short Bio / Description</label>
+                        <textarea name="short_description" class="form-control custom-input" rows="4"
+                            placeholder="Tell employers a bit about yourself...">{{ current_user.short_description if current_user.short_description else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
+                        <div class="form-check form-switch d-flex align-items-center gap-3 m-0">
+                            <input class="form-check-input ms-0" type="checkbox" role="switch" id="visibilitySwitch"
+                                name="is_visible" style="width: 2.5em; height: 1.25em;" {{ 'checked' if
+                                current_user.is_visible else '' }}>
+                            <div>
+                                <label class="form-check-label fw-bold text-dark m-0" for="visibilitySwitch"
+                                    style="font-size: 1rem;">Profile Active (Visible to Employers)</label>
+                                <div class="form-text mt-1">If disabled, you will not appear in employer search results
+                                    or matches.</div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Short Bio / Description</label>
-                                <textarea name="short_description" class="form-control" rows="3"
-                                    placeholder="Tell employers a bit about yourself...">{{ current_user.short_description if current_user.short_description else '' }}</textarea>
-                            </div>
+                        </div>
+                    </div>
 
-                            <div class="mb-3 form-check form-switch p-3 bg-light rounded border">
-                                <input class="form-check-input ms-0 me-2" type="checkbox" role="switch"
-                                    id="visibilitySwitch" name="is_visible" {{ 'checked' if current_user.is_visible
-                                    else '' }}>
-                                <label class="form-check-label fw-bold" for="visibilitySwitch"> &nbsp; Profile Active
-                                    (Visible to Employers)</label>
-                                <div class="form-text mt-1">
-                                    If unchecked, you will NOT appear in employer search results or matches.
-                                </div>
-                            </div>
+                    <button type="submit" class="btn btn-primary btn-custom">Save Changes</button>
+                </form>
+            </div>
 
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
-                        </form>
+            <div class="form-card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3"
+                    style="border-bottom: 1px solid #edf2f7;">
+                    <h3 class="form-card-header mb-0" style="border-bottom: none; padding-bottom: 0;">Your Resumes</h3>
+                    <span class="badge bg-light text-dark border">{{ cvs|length }} / 5 Uploaded</span>
+                </div>
 
-                        <hr class="my-4">
+                <!-- Upload Form -->
+                {% if cvs|length < 5 %} <form method="POST" enctype="multipart/form-data"
+                    class="mb-4 bg-light p-3 rounded border border-light">
+                    <div class="input-group">
+                        <input type="file" class="form-control custom-input bg-white" name="resume" accept=".pdf,.txt"
+                            required>
+                        <button type="submit" class="btn btn-success btn-custom"
+                            style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Upload</button>
+                    </div>
+                    </form>
+                    {% endif %}
 
-                        <h4 class="mb-3">Your Resumes</h4>
-                        <p class="text-muted small">You can upload a maximum of 5 resumes.</p>
-
-                        <!-- Upload Form -->
-                        <form method="POST" enctype="multipart/form-data" class="mb-4">
-                            <div class="input-group">
-                                <input type="file" class="form-control" name="resume" accept=".pdf,.txt" required>
-                                <button type="submit" class="btn btn-success">Upload New Resume</button>
-                            </div>
-                        </form>
-
-                        <!-- Resume List -->
-                        {% if cvs %}
-                        <div class="list-group mb-4">
-                            {% for cv in cvs %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">
+                    <!-- Resume List -->
+                    {% if cvs %}
+                    <div class="resume-list mb-4">
+                        {% for cv in cvs %}
+                        <div class="resume-item">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <i class="bi bi-file-earmark-pdf-fill resume-icon"></i>
+                                <div class="resume-details">
+                                    <p class="resume-name">
                                         {{ (cv.filename or 'Unknown.pdf').split('_', 2)[-1] }}
                                         {% if cv.is_main %}
-                                        <span class="badge bg-primary ms-2">Main Resume</span>
+                                        <span class="badge bg-primary rounded-pill small ms-2">Main Resume</span>
                                         {% endif %}
-                                    </h6>
-                                    <small class="text-muted">Uploaded: {{ cv.upload_date.strftime('%Y-%m-%d')
+                                    </p>
+                                    <small class="text-muted">Uploaded on {{ cv.upload_date.strftime('%B %d, %Y')
                                         }}</small>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    {% if not cv.is_main %}
-                                    <form action="{{ url_for('set_main_cv', cv_id=cv.cv_id) }}" method="POST">
-                                        <button type="submit" class="btn btn-outline-primary btn-sm">Set as
-                                            Main</button>
-                                    </form>
-                                    {% endif %}
-                                    <form action="{{ url_for('delete_cv', cv_id=cv.cv_id) }}" method="POST"
-                                        onsubmit="return confirm('Are you sure?');">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                    </form>
-                                </div>
                             </div>
-                            {% endfor %}
+                            <div class="resume-actions d-flex gap-2">
+                                {% if not cv.is_main %}
+                                <form action="{{ url_for('set_main_cv', cv_id=cv.cv_id) }}" method="POST">
+                                    <button type="submit"
+                                        class="btn btn-outline-primary btn-sm btn-custom text-nowrap">Make Main</button>
+                                </form>
+                                {% endif %}
+                                <form action="{{ url_for('delete_cv', cv_id=cv.cv_id) }}" method="POST"
+                                    onsubmit="return confirm('Delete this resume permanently?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm btn-custom"><i
+                                            class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
                         </div>
-
-                        <!-- Dream Job Button (Only if CVs exist) -->
-                        <div class="text-center">
-                            <hr class="my-4">
-                            <h4 class="mb-3">Ready to find your match?</h4>
-                            <a href="{{ url_for('dream_job') }}" class="btn btn-warning btn-lg shadow-sm fw-bold">✨ Show
-                                me my dream job ✨</a>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-info">No resumes uploaded yet. Upload one above to get started!</div>
-                        {% endif %}
-
-                        <div class="d-grid gap-2 mt-4">
-                            <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Log Out</a>
-                        </div>
+                        {% endfor %}
                     </div>
-                </div>
+
+                    <!-- Dream Job Action -->
+                    <div class="mt-5 p-4 rounded text-center"
+                        style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 1px solid #e2e8f0;">
+                        <h4 class="mb-3 text-dark fw-bold">Ready to find your match?</h4>
+                        <p class="text-muted mb-4">Let our AI match your main resume to the best opportunities.</p>
+                        <a href="{{ url_for('dream_job') }}"
+                            class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5">✨ Find My Dream Job</a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-file-earmark-text display-1 text-muted opacity-50 mb-3 block"></i>
+                        <h5 class="text-dark">No resumes uploaded yet</h5>
+                        <p class="text-muted">Upload a PDF resume above to start matching with employers.</p>
+                    </div>
+                    {% endif %}
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
