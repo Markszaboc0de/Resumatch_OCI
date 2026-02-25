@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Map - Resumatch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles (Consistent across all pages) */
+        .sidebar {
+            width: 250px;
+            background-color: #f7f9fc;
+            border-right: 1px solid #edf1f7;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1050;
+            /* Above Leaflet controls */
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.5rem;
+            color: #2b6cb0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
+            padding: 0;
+            /* No padding for full bleed map */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .map-header {
+            padding: 24px 40px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #edf2f7;
+            z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #1a202c;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        #map-container {
+            flex: 1;
+            width: 100%;
+            background-color: #e5e5e5;
+        }
+
+        /* Popup Customization */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaflet-popup-content {
+            margin: 16px;
+            line-height: 1.5;
+        }
+
+        .popup-title {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #1a202c;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 8px;
+        }
+
+        .popup-job {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        .popup-job:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .popup-company {
+            font-weight: 600;
+            color: #2b6cb0;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .popup-job-title {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .content-area {
+                margin-left: 0;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .map-header {
+                padding: 16px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+                <i class="bi bi-infinity"></i>
+                Resumatch
+            </a>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="px-3 text-muted"
+                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">Navigation</span>
+                </li>
+                <li class="mt-2">
+                    <a href="{{ url_for('dashboard' if current_user.is_authenticated else 'listings') }}">
+                        <i class="bi bi-grid-fill"></i> Job Board
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('job_map') }}" class="active">
+                        <i class="bi bi-map-fill"></i> Map View
+                    </a>
+                </li>
+
+                {% if current_user.is_authenticated %}
+                <li>
+                    <a href="{{ url_for('profile') }}">
+                        <i class="bi bi-person-circle"></i> My Profile
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('notifications') }}">
+                        <i class="bi bi-bell-fill"></i> Notifications
+                    </a>
+                </li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('logout') }}" class="text-danger">
+                        <i class="bi bi-box-arrow-left"></i> Log Out
+                    </a>
+                </li>
+                {% else %}
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('login') }}">
+                        <i class="bi bi-box-arrow-in-right"></i> Log In
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('register') }}">
+                        <i class="bi bi-person-plus-fill"></i> Register
+                    </a>
+                </li>
+                <li style="margin-top: 1rem;">
+                    <a href="{{ url_for('employer_login') }}" class="text-muted">
+                        <i class="bi bi-building"></i> Employer Portal
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="map-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="header-title">Global Job Map</h1>
+                    <p class="text-muted small mb-0 mt-1">Explore available opportunities worldwide. Only correctly
+                        geocoded jobs are shown.</p>
+                </div>
+                <div>
+                    <span class="badge bg-primary rounded-pill px-3 py-2 fs-6 shadow-sm">{{ total_mapped_jobs }} Jobs
+                        Mapped</span>
+                </div>
+            </div>
+
+            <div id="map-container"></div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Safely inject location data from Flask
+            const mapData = {{ map_data | safe
+        }};
+
+        // Initialize Map focused roughly on Europe/Global center
+        const map = L.map('map-container').setView([48.0, 10.0], 4);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        let markerBounds = [];
+
+        // Loop through our grouped map data
+        for (const [locationKey, data] of Object.entries(mapData)) {
+            const lat = data.lat;
+            const lon = data.lon;
+            const jobs = data.jobs;
+
+            // Track bounds to auto-fit map later
+            markerBounds.push([lat, lon]);
+
+            // Build popup content
+            let popupHtml = `<div class="popup-title"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${locationKey}</div>`;
+            popupHtml += `<div style="max-height: 200px; overflow-y: auto; padding-right: 5px;">`;
+
+            jobs.forEach(job => {
+                const applyBtn = job.url ? `<a href="${job.url}" target="_blank" class="btn btn-sm btn-outline-primary mt-1 w-100"><i class="bi bi-box-arrow-up-right me-1"></i>Apply/Visit</a>` : '';
+                popupHtml += `
+                        <div class="popup-job">
+                            <div class="popup-company">${job.company || 'Unknown Company'}</div>
+                            <div class="popup-job-title">${job.title}</div>
+                            ${applyBtn}
+                        </div>
+                    `;
+            });
+            popupHtml += `</div>`;
+
+            // Create custom marker icon using Bootstrap icons
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: #2b6cb0; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"><i class="bi bi-briefcase-fill" style="font-size: 0.8rem;"></i></div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15],
+                popupAnchor: [0, -15]
+            });
+
+            // Add Marker
+            L.marker([lat, lon], { icon: customIcon })
+                .addTo(map)
+                .bindPopup(popupHtml, { maxWidth: 300, minWidth: 250 });
+        }
+
+        // Auto fit bounds if we have markers
+        if (markerBounds.length > 0) {
+            map.fitBounds(markerBounds, { padding: [50, 50], maxZoom: 10 });
+        }
+        });
+    </script>
+</body>
+
+</html>

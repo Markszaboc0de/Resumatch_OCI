@@ -721,6 +721,53 @@ def listings():
     return render_template('listings.html', jobs=current_jobs, page=page, total_pages=pagination.pages, has_next=pagination.has_next, has_prev=pagination.has_prev,
                            search_query=search_query, country_filter=country_filter, city_filter=city_filter, company_filter=company_filter)
 
+@app.route('/map')
+def job_map():
+    # Only show active jobs
+    jobs = Job_Descriptions.query.filter_by(active_status=True).all()
+    
+    # Load cache
+    cache = {}
+    cache_path = os.path.join(BASE_DIR, 'location_cache.json')
+    if os.path.exists(cache_path):
+        import json
+        with open(cache_path, 'r') as f:
+            try:
+                cache = json.load(f)
+            except:
+                pass
+                
+    # Build Map Data
+    map_data = {}
+    total_mapped = 0
+    
+    for job in jobs:
+        if not job.city:
+            continue
+            
+        key = f"{job.city},{job.country}" if job.country else f"{job.city}"
+        coords = cache.get(key)
+        
+        # Only map resolved coordinates
+        if coords and isinstance(coords, dict) and 'lat' in coords and 'lon' in coords:
+            if key not in map_data:
+                map_data[key] = {
+                    'lat': coords['lat'],
+                    'lon': coords['lon'],
+                    'jobs': []
+                }
+                
+            map_data[key]['jobs'].append({
+                'id': job.jd_id,
+                'title': job.title,
+                'company': job.company,
+                'url': job.url
+            })
+            total_mapped += 1
+            
+    import json
+    return render_template('map.html', map_data=json.dumps(map_data), total_mapped_jobs=total_mapped)
+
 
 @app.route('/employer')
 def employer():
