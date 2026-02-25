@@ -6,141 +6,436 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employer Dashboard - Resumatch</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #f7f9fc;
+            border-right: 1px solid #edf1f7;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.5rem;
+            color: #2b6cb0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
+            padding: 40px 60px;
+            max-width: 1200px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            color: #718096;
+            margin-bottom: 32px;
+        }
+
+        /* Cards */
+        .content-card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            margin-bottom: 24px;
+        }
+
+        .card-title-custom {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        /* Job Cards */
+        .job-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            background: #ffffff;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e0;
+        }
+
+        .job-card.inactive {
+            background-color: #f7fafc;
+            opacity: 0.85;
+        }
+
+        .job-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .job-title {
+            font-weight: 700;
+            color: #1a202c;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .job-meta {
+            color: #718096;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        /* Inputs & Buttons */
+        .custom-input {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 10px 14px;
+            background-color: #f7fafc;
+            font-size: 0.95rem;
+        }
+
+        .custom-input:focus {
+            background-color: #ffffff;
+            border-color: #cbd5e0;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+        }
+
+        .btn-custom {
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Modal styling */
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #edf2f7;
+            padding: 1.5rem 2rem;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #edf2f7;
+            padding: 1.5rem 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .content-area {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .job-card-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .job-actions {
+                justify-content: flex-start;
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+                <i class="bi bi-infinity"></i>
+                Resumatch
+            </a>
 
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1">{{ employer.company_name }} - HR Portal</span>
-            <a href="{{ url_for('employer_logout') }}" class="btn btn-outline-light btn-sm">Log Out</a>
-        </div>
-    </nav>
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="px-3 text-muted" style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">HR
+                        Portal</span>
+                </li>
+                <li class="mt-2">
+                    <a href="{{ url_for('employer_dashboard') }}" class="active">
+                        <i class="bi bi-grid-fill"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#createJobModal">
+                        <i class="bi bi-plus-square-fill"></i> Post a Job
+                    </a>
+                </li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('employer_logout') }}" class="text-danger">
+                        <i class="bi bi-box-arrow-left"></i> Log Out
+                    </a>
+                </li>
+            </ul>
+        </aside>
 
-    <div class="container mt-4">
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="alert alert-info">{{ messages[0] }}</div>
-        {% endif %}
-        {% endwith %}
-
-        <div class="row">
-            <!-- Job List -->
-            <div class="col-md-8">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4>Your Job Postings</h4>
-                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createJobModal">
-                        + Post a Job
-                    </button>
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="d-flex justify-content-between align-items-end mb-4 pb-2">
+                <div>
+                    <h1 class="header-title">Employer Dashboard</h1>
+                    <p class="header-subtitle mb-0">Welcome back, {{ employer.company_name }}!</p>
                 </div>
+                <button class="btn btn-primary btn-custom shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#createJobModal">
+                    <i class="bi bi-plus-lg"></i> Post New Job
+                </button>
+            </div>
 
-                {% if jobs %}
-                <div class="list-group">
-                    {% for job in jobs %}
-                    <div
-                        class="list-group-item d-flex justify-content-between align-items-start {{ 'list-group-item-secondary' if not job.active_status else '' }}">
-                        <div class="ms-2 me-auto">
-                            <div class="fw-bold">{{ job.title }}</div>
-                            <small>{{ job.city }}, {{ job.country }}</small>
-                            <div class="text-muted small mt-1">
-                                Status:
-                                <span class="badge {{ 'bg-success' if job.active_status else 'bg-secondary' }}">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                {{ messages[0] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <!-- Job List -->
+                <div class="col-lg-8 mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <h4 class="fw-bold mb-0 text-dark">Your Job Postings</h4>
+                        <span class="badge bg-light text-dark border ms-3">{{ jobs|length }} Total</span>
+                    </div>
+
+                    {% if jobs %}
+                    <div class="jobs-list">
+                        {% for job in jobs %}
+                        <div class="job-card {% if not job.active_status %}inactive{% endif %}">
+                            <div class="job-card-header">
+                                <div>
+                                    <h5 class="job-title">{{ job.title }}</h5>
+                                    <div class="job-meta">
+                                        <span><i class="bi bi-geo-alt-fill text-muted me-1"></i> {{ job.city }}, {{
+                                            job.country }}</span>
+                                    </div>
+                                </div>
+                                <span
+                                    class="badge {{ 'bg-success-subtle text-success border border-success' if job.active_status else 'bg-secondary-subtle text-secondary border border-secondary' }} rounded-pill px-3 py-2">
                                     {{ 'Active' if job.active_status else 'Inactive' }}
                                 </span>
                             </div>
-                        </div>
-                        <div class="d-flex flex-column gap-2">
-                            <a href="{{ url_for('employer_match_candidate', job_id=job.jd_id) }}"
-                                class="btn btn-primary btn-sm">
-                                Find Best Match
-                            </a>
-                            <div class="btn-group btn-group-sm">
+
+                            <div class="job-actions">
+                                <a href="{{ url_for('employer_match_candidate', job_id=job.jd_id) }}"
+                                    class="btn btn-primary btn-custom">
+                                    <i class="bi bi-search"></i> Find Matches
+                                </a>
                                 <a href="{{ url_for('toggle_job_status', job_id=job.jd_id) }}"
-                                    class="btn btn-outline-warning">
+                                    class="btn {{ 'btn-outline-warning' if job.active_status else 'btn-outline-success' }} btn-custom">
+                                    <i
+                                        class="bi {{ 'bi-pause-circle' if job.active_status else 'bi-play-circle' }}"></i>
                                     {{ 'Deactivate' if job.active_status else 'Activate' }}
                                 </a>
-                                <a href="{{ url_for('delete_job', job_id=job.jd_id) }}" class="btn btn-outline-danger"
-                                    onclick="return confirm('Are you sure?')">Delete</a>
+                                <a href="{{ url_for('delete_job', job_id=job.jd_id) }}"
+                                    class="btn btn-outline-danger btn-custom"
+                                    onclick="return confirm('Permanently delete this job posting?');">
+                                    <i class="bi bi-trash"></i> Delete
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="content-card text-center py-5">
+                        <i class="bi bi-file-earmark-plus display-1 text-muted opacity-50 mb-3 block"></i>
+                        <h5 class="text-dark">No job postings yet</h5>
+                        <p class="text-muted">Start building your team by posting your first job opportunity.</p>
+                        <button class="btn btn-primary btn-custom mt-2" data-bs-toggle="modal"
+                            data-bs-target="#createJobModal">
+                            <i class="bi bi-plus-lg"></i> Post a Job
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Sidebar / Stats -->
+                <div class="col-lg-4">
+                    <div class="content-card mb-4">
+                        <h3 class="card-title-custom">Quick Stats</h3>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-primary text-white rounded p-3 me-3">
+                                <i class="bi bi-briefcase-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h2 class="mb-0 fw-bold">{{ jobs | selectattr('active_status', 'equalto', true) | list |
+                                    length }}</h2>
+                                <p class="text-muted small mb-0 fw-semibold text-uppercase">Active Jobs</p>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-muted">No jobs posted yet.</p>
-                {% endif %}
-            </div>
 
-            <!-- Sidebar / Stats -->
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-header">Company Profile</div>
-                    <div class="card-body">
+                    <div class="content-card">
+                        <h3 class="card-title-custom">Company Profile</h3>
                         <form action="{{ url_for('employer_update_profile') }}" method="POST">
                             <div class="mb-3">
-                                <label class="form-label">Company Name</label>
-                                <input type="text" name="company_name" class="form-control"
+                                <label class="form-label text-muted fw-semibold small">Company Name</label>
+                                <input type="text" name="company_name" class="form-control custom-input"
                                     value="{{ employer.company_name }}" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Default Contact Info</label>
-                                <textarea name="contact_info" class="form-control" rows="3"
-                                    placeholder="E.g. Email: hr@company.com\nPhone: 555-0199">{{ employer.contact_info if employer.contact_info else '' }}</textarea>
-                                <div class="form-text">This information will be automatically sent to candidates when
-                                    you notify them.</div>
+                            <div class="mb-4">
+                                <label class="form-label text-muted fw-semibold small">Default Contact Info</label>
+                                <textarea name="contact_info" class="form-control custom-input" rows="4"
+                                    placeholder="E.g. Email: hr@company.com&#10;Phone: 555-0199">{{ employer.contact_info if employer.contact_info else '' }}</textarea>
+                                <div class="form-text small mt-2">This information will be automatically sent to
+                                    candidates when you notify them.</div>
                             </div>
-                            <button type="submit" class="btn btn-secondary w-100">Update Profile</button>
+                            <button type="submit" class="btn btn-dark btn-custom w-100 justify-content-center">Save
+                                Profile Updates</button>
                         </form>
                     </div>
                 </div>
-
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Quick Stats</h5>
-                        <p class="card-text">Total Active Jobs: {{ jobs | selectattr('active_status', 'equalto', true) |
-                            list | length }}</p>
-                    </div>
-                </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- Create Job Modal -->
     <div class="modal fade" id="createJobModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Post New Job</h5>
+                    <h5 class="modal-title fw-bold">Post a New Job Opportunity</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url_for('create_job') }}" method="POST">
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label">Job Title</label>
-                            <input type="text" name="title" class="form-control" required>
+                            <label class="form-label text-dark fw-semibold">Job Title <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control custom-input bg-white border" required>
                         </div>
                         <div class="row">
-                            <div class="col-6 mb-3">
-                                <label class="form-label">City</label>
-                                <input type="text" name="city" class="form-control">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-dark fw-semibold">City</label>
+                                <input type="text" name="city" class="form-control custom-input bg-white border">
                             </div>
-                            <div class="col-6 mb-3">
-                                <label class="form-label">Country</label>
-                                <input type="text" name="country" class="form-control">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-dark fw-semibold">Country</label>
+                                <input type="text" name="country" class="form-control custom-input bg-white border">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Description (Raw Text)</label>
-                            <textarea name="description" class="form-control" rows="5" required></textarea>
+                            <label class="form-label text-dark fw-semibold">Job Description <span
+                                    class="text-danger">*</span></label>
+                            <textarea name="description" class="form-control custom-input bg-white border" rows="6"
+                                required></textarea>
+                            <div class="form-text small">Provide full details about responsibilities and requirements.
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Contact/Application URL</label>
-                            <input type="text" name="url" class="form-control">
+                            <label class="form-label text-dark fw-semibold">Application URL (Optional)</label>
+                            <input type="url" name="url" class="form-control custom-input bg-white border"
+                                placeholder="https://careers.yourcompany.com/job">
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Post Job</button>
+                    <div class="modal-footer bg-light rounded-bottom-4">
+                        <button type="button" class="btn btn-outline-secondary btn-custom"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-custom shadow-sm px-4">Post Job</button>
                     </div>
                 </form>
             </div>

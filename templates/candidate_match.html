@@ -6,56 +6,306 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Match - Resumatch</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #f7f9fc;
+            border-right: 1px solid #edf1f7;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.5rem;
+            color: #2b6cb0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
+            padding: 40px 60px;
+            max-width: 1000px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 32px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Match Card */
+        .match-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            overflow: hidden;
+        }
+
+        .match-card-header {
+            background-color: #f8fafc;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .match-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        .match-card-body {
+            padding: 2.5rem;
+        }
+
+        /* Score Display */
+        .score-container {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(145deg, #ffffff, #f7fafc);
+            border-radius: 12px;
+            border: 1px solid #edf2f7;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .score-value {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Candidate Info */
+        .candidate-info-box {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .candidate-info-title {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .candidate-desc {
+            color: #4a5568;
+            line-height: 1.6;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .btn-custom {
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .content-area {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .score-container {
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
 </head>
 
-<body class="bg-light">
+<body>
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+                <i class="bi bi-infinity"></i>
+                Resumatch
+            </a>
 
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1">Match Result</span>
-            <a href="{{ url_for('employer_dashboard') }}" class="btn btn-outline-light btn-sm">Back to Dashboard</a>
-        </div>
-    </nav>
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="px-3 text-muted" style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">HR
+                        Portal</span>
+                </li>
+                <li class="mt-2">
+                    <a href="{{ url_for('employer_dashboard') }}">
+                        <i class="bi bi-grid-fill"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('employer_dashboard') }}" class="active">
+                        <i class="bi bi-person-check-fill"></i> Candidate Match
+                    </a>
+                </li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('employer_logout') }}" class="text-danger">
+                        <i class="bi bi-box-arrow-left"></i> Log Out
+                    </a>
+                </li>
+            </ul>
+        </aside>
 
-    <div class="container mt-5">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Best Match for: {{ job.title }}</h4>
+        <!-- Main Content -->
+        <main class="content-area">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="header-title mb-0">Match Result</h1>
+                <a href="{{ url_for('employer_dashboard') }}" class="btn btn-outline-secondary btn-custom btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        <div class="display-1 fw-bold text-success">{{ score }}%</div>
-                        <div class="text-muted">Match Score</div>
-                    </div>
-                    <div class="col-md-8">
-                        <h5>Candidate Profile</h5>
 
-                        <div class="alert alert-secondary">
-                            <strong>About the Candidate:</strong><br>
-                            {{ candidate.short_description if candidate.short_description else 'No description
-                            provided.' }}
+            <div class="match-card">
+                <div class="match-card-header">
+                    <h4 class="match-card-title">Best Match for: <span class="text-primary">{{ job.title }}</span></h4>
+                </div>
+
+                <div class="match-card-body">
+                    <div class="row align-items-stretch">
+                        <!-- Score Column -->
+                        <div class="col-lg-4 mb-4 mb-lg-0">
+                            <div class="score-container">
+                                <div class="score-value">{{ score }}%</div>
+                                <div class="score-label">Match Score</div>
+                                <div class="mt-3 text-muted small px-3">
+                                    Our AI has determined this candidate is a strong potential fit for your role.
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="mt-4">
-                            {% if has_notified %}
-                            <button class="btn btn-secondary" disabled>Candidate Notified</button>
-                            {% else %}
-                            <form
-                                action="{{ url_for('notify_candidate', job_id=job.jd_id, candidate_id=candidate.user_id) }}"
-                                method="POST" class="d-inline"
-                                onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='Sending...';">
-                                <button type="submit" class="btn btn-warning">I'm Interested - Notify Candidate</button>
-                            </form>
-                            {% endif %}
-                        </div>
-                        <div class="mt-2 text-muted small">
-                            * Contact details are hidden until the candidate responds.
+                        <!-- Candidate Details Column -->
+                        <div class="col-lg-8">
+                            <h5 class="fw-bold mb-3">Candidate Profile Summary</h5>
+
+                            <div class="candidate-info-box">
+                                <div class="candidate-info-title">
+                                    <i class="bi bi-person-badge text-primary"></i> About the Candidate
+                                </div>
+                                <p class="candidate-desc">{{ candidate.short_description if candidate.short_description
+                                    else 'No description provided by the candidate.' }}</p>
+                            </div>
+
+                            <div class="action-section mt-4 pt-3 border-top">
+                                {% if has_notified %}
+                                <div class="alert alert-success d-flex align-items-center mb-0" role="alert">
+                                    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+                                    <div>
+                                        <strong>Candidate Notified</strong><br>
+                                        We've sent your contact information to the candidate. They will reach out if
+                                        interested.
+                                    </div>
+                                </div>
+                                {% else %}
+                                <p class="text-muted mb-3"><i class="bi bi-info-circle me-1"></i> Contact details remain
+                                    hidden until the candidate responds to your interest.</p>
+                                <form
+                                    action="{{ url_for('notify_candidate', job_id=job.jd_id, candidate_id=candidate.user_id) }}"
+                                    method="POST"
+                                    onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<span class=\'spinner-border spinner-border-sm me-2\' role=\'status\' aria-hidden=\'true\'></span>Sending...';">
+                                    <button type="submit"
+                                        class="btn btn-warning btn-custom shadow-sm text-dark px-4 py-3 fs-5">
+                                        <i class="bi bi-send-fill me-2"></i> I'm Interested - Notify Candidate
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
