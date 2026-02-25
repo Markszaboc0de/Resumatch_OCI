@@ -306,6 +306,9 @@ from flask import session
 
 @app.route('/employer/login', methods=['GET', 'POST'])
 def employer_login():
+    if 'employer_id' in session:
+        return redirect(url_for('employer_dashboard'))
+        
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -723,6 +726,10 @@ def listings():
 
 @app.route('/map')
 def job_map():
+    from flask import session
+    if 'employer_id' in session:
+        return redirect(url_for('employer_dashboard'))
+        
     # Only show active jobs. Use direct session query to bypass missing employer_id column crashes
     jobs = db.session.query(
         Job_Descriptions.jd_id, 
