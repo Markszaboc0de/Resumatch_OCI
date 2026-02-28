@@ -421,14 +421,32 @@
                         <div class="mb-3">
                             <label class="form-label text-dark fw-semibold">Job Description <span
                                     class="text-danger">*</span></label>
-                            <textarea name="description" class="form-control custom-input bg-white border" rows="6"
-                                required></textarea>
+                            <textarea name="description" id="jobDescription"
+                                class="form-control custom-input bg-white border" rows="6"></textarea>
                             <div class="form-text small">Provide full details about responsibilities and requirements.
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-dark fw-semibold">Application URL (Optional)</label>
-                            <input type="url" name="url" class="form-control custom-input bg-white border"
+                            <label class="form-label text-dark fw-semibold">Application Method <span
+                                    class="text-danger">*</span></label>
+                            <div class="d-flex gap-4 mt-2 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="apply_method" id="applyNative"
+                                        value="native" checked>
+                                    <label class="form-check-label" for="applyNative">Open natively on Resumatch</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="apply_method" id="applyRedirect"
+                                        value="redirect">
+                                    <label class="form-check-label" for="applyRedirect">Redirect to external career
+                                        site</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3" id="urlFieldWrapper" style="display: none;">
+                            <label class="form-label text-dark fw-semibold">Application URL <span
+                                    class="text-danger">*</span></label>
+                            <input type="url" name="url" id="jobUrl" class="form-control custom-input bg-white border"
                                 placeholder="https://careers.yourcompany.com/job">
                         </div>
                     </div>
@@ -443,6 +461,53 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Apply Method Toggle
+            const applyNative = document.getElementById('applyNative');
+            const applyRedirect = document.getElementById('applyRedirect');
+            const urlFieldWrapper = document.getElementById('urlFieldWrapper');
+            const jobUrl = document.getElementById('jobUrl');
+
+            function toggleUrlField() {
+                if (applyRedirect.checked) {
+                    urlFieldWrapper.style.display = 'block';
+                    jobUrl.required = true;
+                } else {
+                    urlFieldWrapper.style.display = 'none';
+                    jobUrl.required = false;
+                    jobUrl.value = '';
+                }
+            }
+
+            applyNative.addEventListener('change', toggleUrlField);
+            applyRedirect.addEventListener('change', toggleUrlField);
+
+            // Initialize TinyMCE
+            tinymce.init({
+                selector: '#jobDescription',
+                menubar: false,
+                plugins: 'lists link',
+                toolbar: 'undo redo | blocks | bold italic | bullist numlist | link',
+                height: 300,
+                skin: 'oxide',
+                content_css: 'default',
+                setup: function (editor) {
+                    editor.on('change', function () {
+                        editor.save(); // ensure textarea is updated before form submit
+                    });
+                }
+            });
+
+            // Fix TinyMCE inside Bootstrap modal
+            document.addEventListener('focusin', function (e) {
+                if (e.target.closest('.tox-tinymce-aux, .moxman-window, .tam-assetmanager-root')) {
+                    e.stopImmediatePropagation();
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

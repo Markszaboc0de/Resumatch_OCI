@@ -420,7 +420,10 @@
 
                         <!-- Action Col -->
                         <div class="job-action text-end">
-                            {% if job.url %}
+                            {% if job.is_native %}
+                            <a href="{{ url_for('job_detail', jd_id=job.jd_id) }}" target="_blank"
+                                class="btn-visit">View Job</a>
+                            {% elif job.url %}
                             <a href="{{ job.url if job.url.startswith('http') else 'http://' + job.url }}"
                                 target="_blank" class="btn-visit">Visit</a>
                             {% else %}

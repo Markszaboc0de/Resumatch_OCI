@@ -86,6 +86,7 @@ class Job_Descriptions(db.Model):
     parsed_tokens = db.Column(db.Text, nullable=True)
     is_intern = db.Column(db.Boolean, default=False)
     active_status = db.Column(db.Boolean, default=True)
+    is_native = db.Column(db.Boolean, default=False)
     employer_id = db.Column(db.Integer, db.ForeignKey('employers.employer_id'), nullable=True)
 
     employer = db.relationship('Employers', backref=db.backref('jobs', lazy=True))
@@ -392,10 +393,15 @@ def create_job():
     country = request.form.get('country')
     description = request.form.get('description')
     url = request.form.get('url')
+    apply_method = request.form.get('apply_method', 'redirect')
+    
+    is_native = (apply_method == 'native')
     
     # Ensure URL has protocol
-    if url and not url.startswith(('http://', 'https://')):
+    if url and not is_native and not url.startswith(('http://', 'https://')):
         url = 'http://' + url
+    elif is_native:
+        url = None
     
     # Auto-fill company name
     employer = Employers.query.get(employer_id)
@@ -413,7 +419,8 @@ def create_job():
         url=url,
         parsed_tokens=parsed_tokens,
         employer_id=employer_id,
-        active_status=True
+        active_status=True,
+        is_native=is_native
     )
     
     try:
@@ -596,6 +603,16 @@ def inject_notifications():
     return dict(unread_count=0)
 
 # --- ROUTES ---
+
+@app.route('/job/<int:jd_id>')
+def job_detail(jd_id):
+    job = Job_Descriptions.query.get_or_404(jd_id)
+    if not job.active_status:
+        flash("This job is no longer active.")
+        if current_user.is_authenticated:
+            return redirect(url_for('dashboard'))
+        return redirect(url_for('listings'))
+    return render_template('job_detail.html', job=job)
 
 @app.route('/')
 def landing():
