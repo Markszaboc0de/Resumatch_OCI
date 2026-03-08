@@ -271,15 +271,34 @@
                     </div>
 
                     <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
-                        <div class="form-check form-switch d-flex align-items-center gap-3 m-0">
-                            <input class="form-check-input ms-0" type="checkbox" role="switch" id="visibilitySwitch"
-                                name="is_visible" style="width: 2.5em; height: 1.25em;" {{ 'checked' if
-                                current_user.is_visible else '' }}>
-                            <div>
-                                <label class="form-check-label fw-bold text-dark m-0" for="visibilitySwitch"
-                                    style="font-size: 1rem;">Profile Active (Visible to Employers)</label>
-                                <div class="form-text mt-1">If disabled, you will not appear in employer search results
-                                    or matches.</div>
+                        <div class="form-check form-switch d-flex align-items-center justify-content-between gap-3 m-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <input class="form-check-input ms-0" type="checkbox" role="switch" id="visibilitySwitch"
+                                    name="is_visible" style="width: 2.5em; height: 1.25em;" {{ 'checked' if
+                                    current_user.is_visible else '' }}>
+                                <div>
+                                    <label class="form-check-label fw-bold text-dark m-0" for="visibilitySwitch"
+                                        style="font-size: 1rem;">Profile Active (Visible to Employers)</label>
+                                    <div class="form-text mt-1">If disabled, you will not appear in employer search
+                                        results
+                                        or matches.</div>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                {% if is_expired %}
+                                <span class="badge bg-danger mb-2">Expired</span>
+                                <small class="text-danger d-block">Your profile is currently hidden because it has not
+                                    been renewed in 7 days.</small>
+                                {% else %}
+                                <span class="badge bg-success mb-2">Active</span>
+                                {% if current_user.last_active_date %}
+                                <small class="text-muted d-block">Last renewed: {{
+                                    current_user.last_active_date.strftime('%Y-%m-%d') }}</small>
+                                {% endif %}
+                                {% endif %}
+                                <small class="text-secondary opacity-75 d-block mt-1">Saving profile renews for 7
+                                    days.</small>
                             </div>
                         </div>
                     </div>

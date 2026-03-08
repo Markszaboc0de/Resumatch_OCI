@@ -10,6 +10,8 @@ from sentence_transformers import SentenceTransformer, util
 import time
 from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import json
+import io
 
 # Define base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,7 +37,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Load NLP Model (Global) - Loaded once at startup
 print("Loading NLP Model...")
-nlp_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+nlp_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 print("NLP Model Loaded.")
 
 # --- MODELS ---
@@ -48,6 +50,7 @@ class Users(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     short_description = db.Column(db.String(500), nullable=True)
     is_visible = db.Column(db.Boolean, default=True)
+    last_active_date = db.Column(db.DateTime, default=datetime.utcnow)
     
     def get_id(self):
         return str(self.user_id)
@@ -165,8 +168,9 @@ def load_cached_embeddings():
         print(f"Failed to load cached embeddings: {e}")
     return None, None
 
-def calculate_matches_background(cv_id, cv_text):
+def calculate_matches_background(cv_id, cv_embedding_list):
     with app.app_context():
+        import torch
         start_time = time.time()
         print(f"[{start_time}] Starting background matching for CV ID: {cv_id}")
         
@@ -189,12 +193,11 @@ def calculate_matches_background(cv_id, cv_text):
             print(f"[{time.time()}] Using cached embeddings for {len(job_ids)} jobs (FAST).")
 
         # 2. Encode CV
-        cleaned_cv = clean_text(cv_text)
-        print(f"[{time.time()}] Encoding User CV...")
-        cv_embedding = nlp_model.encode(cleaned_cv, convert_to_tensor=True)
+        print(f"[{time.time()}] Using Pre-encoded User CV...")
+        cv_embedding = torch.tensor(cv_embedding_list).unsqueeze(0) # [1, vector_dim]
 
         # 3. Calculate Cosine Similarity
-        # cv_embedding is [1, 384], job_embeddings is [N, 384]
+        # cv_embedding is [1, vector_dim], job_embeddings is [N, vector_dim]
         # util.cos_sim returns [1, N]
         scores = util.cos_sim(cv_embedding, job_embeddings)[0]
 
@@ -250,9 +253,28 @@ def refresh_all_matches():
         # to ensure consistency with any model updates or text cleaning changes.
         
         # Encode CVs
-        cv_texts = [clean_text(cv.raw_text) for cv in cvs]
-        cv_ids = [cv.cv_id for cv in cvs]
-        cv_embeddings = nlp_model.encode(cv_texts, convert_to_tensor=True)
+        import torch
+        cv_embeddings_list = []
+        cv_ids = []
+        
+        for cv in cvs:
+            if cv.parsed_tokens and cv.parsed_tokens.startswith('['):
+                try:
+                    vec = json.loads(cv.parsed_tokens)
+                    cv_embeddings_list.append(vec)
+                    cv_ids.append(cv.cv_id)
+                except:
+                    pass
+            elif cv.raw_text: # Fallback to encoding old texts if necessary
+                vec = nlp_model.encode(clean_text(cv.raw_text), convert_to_tensor=False)
+                cv_embeddings_list.append(vec.tolist())
+                cv_ids.append(cv.cv_id)
+                
+        if not cv_embeddings_list:
+            print("No valid CV vectors found.")
+            return
+            
+        cv_embeddings = torch.tensor(cv_embeddings_list)
 
         # Encode Jobs
         job_texts = [clean_text(job.raw_text) for job in jobs]
@@ -484,14 +506,41 @@ def employer_match_candidate(job_id):
     job_embedding = nlp_model.encode(job_text, convert_to_tensor=True)
     
     # 2. Get All Candidates
-    cvs = db.session.query(CVs).join(Users, CVs.user_id == Users.user_id).filter(CVs.user_id.isnot(None), Users.is_visible == True).all()
+    import datetime as dt
+    seven_days_ago = dt.datetime.utcnow() - dt.timedelta(days=7)
+    cvs = db.session.query(CVs).join(Users, CVs.user_id == Users.user_id).filter(
+        CVs.user_id.isnot(None), 
+        Users.is_visible == True,
+        Users.last_active_date >= seven_days_ago
+    ).all()
     
     if not cvs:
         flash('No visible candidates found in database.')
         return redirect(url_for('employer_dashboard'))
         
-    cv_texts = [clean_text(cv.raw_text) for cv in cvs]
-    cv_embeddings = nlp_model.encode(cv_texts, convert_to_tensor=True)
+    import torch
+    valid_cvs = []
+    cv_embeddings_list = []
+    
+    for cv in cvs:
+        if cv.parsed_tokens and cv.parsed_tokens.startswith('['):
+            try:
+                vec = json.loads(cv.parsed_tokens)
+                cv_embeddings_list.append(vec)
+                valid_cvs.append(cv)
+            except:
+                pass
+        elif cv.raw_text:
+            vec = nlp_model.encode(clean_text(cv.raw_text), convert_to_tensor=False)
+            cv_embeddings_list.append(vec.tolist())
+            valid_cvs.append(cv)
+            
+    if not valid_cvs:
+        flash('No valid candidates found (no vectors).')
+        return redirect(url_for('employer_dashboard'))
+        
+    cvs = valid_cvs
+    cv_embeddings = torch.tensor(cv_embeddings_list)
     
     # 3. Compute Similarity
     # job_embedding: [1, 384], cv_embeddings: [N, 384]
@@ -814,8 +863,12 @@ def profile():
         if 'short_description' in request.form:
             current_user.short_description = request.form.get('short_description')
             current_user.is_visible = request.form.get('is_visible') == 'on'
+            
+            # Renew active status
+            current_user.last_active_date = datetime.utcnow()
+            
             db.session.commit()
-            flash('Profile updated successfully.')
+            flash('Profile updated and active status renewed successfully.')
             return redirect(url_for('profile'))
 
         # Check CV Limit
@@ -833,39 +886,49 @@ def profile():
             flash('No selected file')
             return redirect(request.url)
             
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        
+        if file_size > 5 * 1024 * 1024:
+            flash('CV file size exceeds the 5MB limit.')
+            return redirect(request.url)
+            
         if file and allowed_file(file.filename):
             try:
                 # 1. Secure Filename
                 filename = secure_filename(file.filename)
                 unique_filename = f"{current_user.user_id}_{int(time.time())}_{filename}"
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                 
-                # 2. Save File
-                file.save(filepath)
-                
-                # 3. Extract Text based on extension
+                # 2. Extract Text Memory
+                file_bytes = file.read()
                 extracted_text = ""
                 if filename.lower().endswith('.pdf'):
-                    extracted_text = extract_text_from_pdf(filepath)
+                    reader = PdfReader(io.BytesIO(file_bytes))
+                    for page in reader.pages:
+                        extracted_text += page.extract_text() or ""
                 elif filename.lower().endswith('.txt'):
-                    extracted_text = extract_text_from_txt(filepath)
+                    extracted_text = file_bytes.decode('utf-8', errors='ignore')
                 
-                # 4. Clean Text (Remove null bytes specifically)
+                # 3. Clean Text and Encode
                 cleaned_text = clean_text(extracted_text)
-                cleaned_text = cleaned_text.replace('\x00', '') # Extra safety
+                cleaned_text = cleaned_text.replace('\x00', '')
+                cv_embedding = nlp_model.encode(cleaned_text, convert_to_tensor=False)
+                vector_json = json.dumps(cv_embedding.tolist())
                 
-                # 5. Save to Database
+                # 4. Save to Database
                 new_cv = CVs(
                     user_id=current_user.user_id,
                     filename=unique_filename,
-                    file_path=filepath,
-                    raw_text=cleaned_text # Store cleaned text to avoid DB errors
+                    file_path=None,
+                    raw_text="",
+                    parsed_tokens=vector_json
                 )
                 db.session.add(new_cv)
                 db.session.commit()
 
-                # 6. Trigger Background Match Calculation
-                thread = threading.Thread(target=calculate_matches_background, args=(new_cv.cv_id, cleaned_text))
+                # 5. Trigger Background Match Calculation
+                thread = threading.Thread(target=calculate_matches_background, args=(new_cv.cv_id, cv_embedding.tolist()))
                 thread.start()
                 
                 flash('Resume uploaded successfully! Job matching started in background.')
@@ -876,7 +939,13 @@ def profile():
                 flash(f'An error occurred during upload: {str(e)}')
                 return redirect(request.url)
 
-    return render_template('profile.html', user=current_user, cvs=user_cvs)
+    import datetime as dt
+    seven_days_ago = dt.datetime.utcnow() - dt.timedelta(days=7)
+    is_expired = False
+    if current_user.last_active_date and current_user.last_active_date < seven_days_ago:
+        is_expired = True
+
+    return render_template('profile.html', user=current_user, cvs=user_cvs, is_expired=is_expired)
 
 @app.route('/delete_cv/<int:cv_id>', methods=['POST'])
 @login_required
