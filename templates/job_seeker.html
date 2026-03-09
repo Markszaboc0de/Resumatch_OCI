@@ -43,6 +43,7 @@
                         <th>Job ID</th>
                         <th>Job Title</th>
                         <th>Match Score</th>
+                        <th>Match Basis / Skills</th>
                         <th>Link</th>
                     </tr>
                 </thead>
@@ -53,6 +54,11 @@
                         <td>{{ job.id }}</td>
                         <td>{{ job.title }}</td>
                         <td>{{ job.score }}%</td>
+                        <td>
+                            {% for reason in job.reasons %}
+                            <span class="badge bg-info text-dark me-1 mb-1">{{ reason }}</span>
+                            {% endfor %}
+                        </td>
                         <td><a href="{{ job.url }}" target="_blank" class="btn btn-primary btn-sm">View Job</a></td>
                     </tr>
                     {% endfor %}

@@ -277,6 +277,20 @@
                                     else 'No description provided by the candidate.' }}</p>
                             </div>
 
+                            <div class="candidate-info-box border-0 shadow-sm" style="background-color: #f0fdf4;">
+                                <div class="candidate-info-title text-success">
+                                    <i class="bi bi-stars"></i> Match Basis / Key Skills
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    {% for reason in reasons %}
+                                    <span
+                                        class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-3 py-2 fs-6 rounded-pill">
+                                        {{ reason|title }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
                             <div class="action-section mt-4 pt-3 border-top">
                                 {% if has_notified %}
                                 <div class="alert alert-success d-flex align-items-center mb-0" role="alert">

@@ -136,6 +136,37 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text.lower()
 
+def extract_match_reasons(cv_text, jd_text):
+    """
+    Extracts the top 3 overlapping words (length >= 5) between a CV and a Job Description.
+    If fewer than 3 are found, falls back to generic reasons.
+    """
+    if not cv_text or not jd_text:
+        return ["Szakmai tapasztalat", "Profil egyezés", "Készségek"]
+        
+    cv_words = set(clean_text(cv_text).split())
+    jd_words = set(clean_text(jd_text).split())
+    
+    # Find commonly shared words
+    overlap = cv_words.intersection(jd_words)
+    
+    # Filter for words >= 5 chars, assuming these are more meaningful skills/keywords
+    meaningful = [w for w in overlap if len(w) >= 5]
+    
+    # Sort by length descending, as a simple heuristic for specificity
+    meaningful.sort(key=len, reverse=True)
+    
+    reasons = meaningful[:3]
+    
+    # Fill in fallbacks if needed
+    fallbacks = ["Szakmai tapasztalat", "Profil egyezés", "Készségek"]
+    while len(reasons) < 3:
+        for f in fallbacks:
+            if f not in reasons and len(reasons) < 3:
+                reasons.append(f)
+                
+    return reasons
+
 def extract_text_from_pdf(filepath):
     try:
         reader = PdfReader(filepath)
@@ -562,6 +593,9 @@ def employer_match_candidate(job_id):
         # Get User details
         candidate_user = Users.query.get(best_cv.user_id)
         
+        # Extract Match Reasons
+        reasons = extract_match_reasons(best_cv.raw_text, job.raw_text)
+        
         # Check if already notified
         has_notified = False
         if Notifications.query.filter_by(user_id=candidate_user.user_id, employer_id=employer_id, job_id=job_id).first():
@@ -572,6 +606,7 @@ def employer_match_candidate(job_id):
                                candidate=candidate_user, 
                                score=match_percentage,
                                cv=best_cv,
+                               reasons=reasons,
                                has_notified=has_notified)
     else:
         flash('Could not determine a best match.')
@@ -1042,15 +1077,20 @@ def view_matches(cv_id):
         order_by(Precalc_Scores.similarity_score.desc()).\
         limit(50).all() 
 
+    cv = CVs.query.get(cv_id)
+    cv_text = cv.raw_text if cv else ""
+
     matches = []
     for score_entry, job in results:
+        reasons = extract_match_reasons(cv_text, job.raw_text)
         matches.append({
             "id": job.jd_id,
             "title": job.title,
             "company": job.company,
             "description": job.raw_text[:200] + "...", 
             "score": round(score_entry.similarity_score * 100, 2),
-            "url": job.url
+            "url": job.url,
+            "reasons": reasons
         })
 
     return render_template('job_seeker.html', matches=matches, cv_id=cv_id) 
