@@ -944,9 +944,11 @@ def profile():
                 elif filename.lower().endswith('.txt'):
                     extracted_text = file_bytes.decode('utf-8', errors='ignore')
                 
+                # Strip null bytes that crash PostgreSQL
+                extracted_text = extracted_text.replace('\x00', '')
+                
                 # 3. Clean Text and Encode
                 cleaned_text = clean_text(extracted_text)
-                cleaned_text = cleaned_text.replace('\x00', '')
                 cv_embedding = nlp_model.encode(cleaned_text, convert_to_tensor=False)
                 vector_json = json.dumps(cv_embedding.tolist())
                 
