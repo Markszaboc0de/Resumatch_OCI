@@ -132,17 +132,18 @@ def clean_text(text):
     if not text: return ""
     text = re.sub(r'<[^>]+>', ' ', text)
     text = re.sub(r'http\S+|www\S+|https\S+', ' ', text, flags=re.MULTILINE)
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    # Use \w to keep all Unicode letters and numbers, replacing punctuation with spaces
+    text = re.sub(r'[^\w\s]', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text.lower()
 
 def extract_match_reasons(cv_text, jd_text):
     """
     Extracts the top 3 overlapping words (length >= 5) between a CV and a Job Description.
-    If fewer than 3 are found, falls back to generic reasons.
+    If 0 are found, returns a generic 'No exact keyword matches found' message.
     """
     if not cv_text or not jd_text:
-        return ["Szakmai tapasztalat", "Profil egyezés", "Készségek"]
+        return ["No exact keyword matches found"]
         
     cv_words = set(clean_text(cv_text).split())
     jd_words = set(clean_text(jd_text).split())
@@ -151,19 +152,15 @@ def extract_match_reasons(cv_text, jd_text):
     overlap = cv_words.intersection(jd_words)
     
     # Filter for words >= 5 chars, assuming these are more meaningful skills/keywords
-    meaningful = [w for w in overlap if len(w) >= 5]
+    meaningful = [w for w in overlap if len(w) >= 5 and not w.isdigit()]
     
     # Sort by length descending, as a simple heuristic for specificity
     meaningful.sort(key=len, reverse=True)
     
     reasons = meaningful[:3]
     
-    # Fill in fallbacks if needed
-    fallbacks = ["Szakmai tapasztalat", "Profil egyezés", "Készségek"]
-    while len(reasons) < 3:
-        for f in fallbacks:
-            if f not in reasons and len(reasons) < 3:
-                reasons.append(f)
+    if len(reasons) == 0:
+        return ["No exact keyword matches found"]
                 
     return reasons
 
