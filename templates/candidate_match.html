@@ -247,9 +247,11 @@
                 </a>
             </div>
 
-            <div class="match-card">
+            {% for match in matches %}
+            <div class="match-card mb-4">
                 <div class="match-card-header">
-                    <h4 class="match-card-title">Best Match for: <span class="text-primary">{{ job.title }}</span></h4>
+                    <h4 class="match-card-title">Match #{{ loop.index }} for: <span class="text-primary">{{ job.title
+                            }}</span></h4>
                 </div>
 
                 <div class="match-card-body">
@@ -257,7 +259,7 @@
                         <!-- Score Column -->
                         <div class="col-lg-4 mb-4 mb-lg-0">
                             <div class="score-container">
-                                <div class="score-value">{{ score }}%</div>
+                                <div class="score-value">{{ match.score }}%</div>
                                 <div class="score-label">Match Score</div>
                                 <div class="mt-3 text-muted small px-3">
                                     Our AI has determined this candidate is a strong potential fit for your role.
@@ -273,7 +275,8 @@
                                 <div class="candidate-info-title">
                                     <i class="bi bi-person-badge text-primary"></i> About the Candidate
                                 </div>
-                                <p class="candidate-desc">{{ candidate.short_description if candidate.short_description
+                                <p class="candidate-desc">{{ match.candidate.short_description if
+                                    match.candidate.short_description
                                     else 'No description provided by the candidate.' }}</p>
                             </div>
 
@@ -282,13 +285,14 @@
                                     <i class="bi bi-stars"></i> Match Basis / Key Skills
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 mt-2">
-                                    {% if reasons|length == 1 and reasons[0] == "No exact keyword matches found" %}
+                                    {% if match.reasons|length == 1 and match.reasons[0] == "No exact keyword matches
+                                    found" %}
                                     <span
                                         class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 fs-6 rounded-pill">
                                         No exact keywords matched
                                     </span>
                                     {% else %}
-                                    {% for reason in reasons %}
+                                    {% for reason in match.reasons %}
                                     <span
                                         class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-3 py-2 fs-6 rounded-pill">
                                         {{ reason|title }}
@@ -299,7 +303,7 @@
                             </div>
 
                             <div class="action-section mt-4 pt-3 border-top">
-                                {% if has_notified %}
+                                {% if match.has_notified %}
                                 <div class="alert alert-success d-flex align-items-center mb-0" role="alert">
                                     <i class="bi bi-check-circle-fill fs-4 me-3"></i>
                                     <div>
@@ -312,7 +316,7 @@
                                 <p class="text-muted mb-3"><i class="bi bi-info-circle me-1"></i> Contact details remain
                                     hidden until the candidate responds to your interest.</p>
                                 <form
-                                    action="{{ url_for('notify_candidate', job_id=job.jd_id, candidate_id=candidate.user_id) }}"
+                                    action="{{ url_for('notify_candidate', job_id=job.jd_id, candidate_id=match.candidate.user_id) }}"
                                     method="POST"
                                     onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<span class=\'spinner-border spinner-border-sm me-2\' role=\'status\' aria-hidden=\'true\'></span>Sending...';">
                                     <button type="submit"
@@ -326,7 +330,20 @@
                     </div>
                 </div>
             </div>
-        </main>
+            {% endfor %}
+
+            {% if matches|length < 5 %} {% for i in range(5 - matches|length) %} <div class="match-card mb-4"
+                style="background-color: #f8fafc; border: 2px dashed #e2e8f0; box-shadow: none;">
+                <div class="match-card-body text-center py-5">
+                    <i class="bi bi-emoji-wink" style="font-size: 3rem; color: #a0aec0;"></i>
+                    <h4 class="mt-3 text-muted fw-bold">Slot #{{ matches|length + loop.index }} Empty</h4>
+                    <p class="text-muted mb-0">We are still searching for more stellar candidates to fill this
+                        spot!<br>Check back soon as our talent pool grows.</p>
+                </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

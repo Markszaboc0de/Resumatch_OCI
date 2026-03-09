@@ -576,39 +576,42 @@ def employer_match_candidate(job_id):
     # job_embedding: [1, 384], cv_embeddings: [N, 384]
     scores = util.cos_sim(job_embedding, cv_embeddings)[0] # [N]
     
-    # 4. Find Best Match
-    best_score = -1.0
-    best_cv_index = -1
+    # 4. Find Top 5 Matches
+    all_scores = [(float(score), i) for i, score in enumerate(scores)]
+    all_scores.sort(key=lambda x: x[0], reverse=True)
     
-    for i, score in enumerate(scores):
-        if score > best_score:
-            best_score = score
-            best_cv_index = i
+    top_matches = all_scores[:5]
+    
+    match_list = []
+    if top_matches:
+        for score_val, cv_idx in top_matches:
+            cv_item = cvs[cv_idx]
+            match_percentage = round(score_val * 100, 1)
             
-    if best_cv_index != -1:
-        best_cv = cvs[best_cv_index]
-        match_percentage = round(float(best_score) * 100, 1)
-        
-        # Get User details
-        candidate_user = Users.query.get(best_cv.user_id)
-        
-        # Extract Match Reasons
-        reasons = extract_match_reasons(best_cv.raw_text, job.raw_text)
-        
-        # Check if already notified
-        has_notified = False
-        if Notifications.query.filter_by(user_id=candidate_user.user_id, employer_id=employer_id, job_id=job_id).first():
-            has_notified = True
+            # Get User details
+            candidate_user = Users.query.get(cv_item.user_id)
+            
+            # Extract Match Reasons
+            reasons = extract_match_reasons(cv_item.raw_text, job.raw_text)
+            
+            # Check if already notified
+            has_notified = False
+            if Notifications.query.filter_by(user_id=candidate_user.user_id, employer_id=employer_id, job_id=job_id).first():
+                has_notified = True
+
+            match_list.append({
+                'candidate': candidate_user,
+                'score': match_percentage,
+                'cv': cv_item,
+                'reasons': reasons,
+                'has_notified': has_notified
+            })
 
         return render_template('candidate_match.html', 
                                job=job, 
-                               candidate=candidate_user, 
-                               score=match_percentage,
-                               cv=best_cv,
-                               reasons=reasons,
-                               has_notified=has_notified)
+                               matches=match_list)
     else:
-        flash('Could not determine a best match.')
+        flash('Could not determine any matches.')
     return redirect(url_for('employer_dashboard'))
 
 @app.route('/employer/notify/<int:job_id>/<int:candidate_id>', methods=['POST'])
