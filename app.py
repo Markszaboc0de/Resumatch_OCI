@@ -531,6 +531,9 @@ def employer_match_candidate(job_id):
         flash('Unauthorized.')
         return redirect(url_for('employer_dashboard'))
     
+    keywords_param = request.args.get('keywords', '')
+    filter_keywords = [kw.strip().lower() for kw in keywords_param.split(',') if kw.strip()]
+    
     # 1. Get Job Text/Embedding
     job_text = clean_text(job.raw_text)
     job_embedding = nlp_model.encode(job_text, convert_to_tensor=True)
@@ -538,14 +541,25 @@ def employer_match_candidate(job_id):
     # 2. Get All Candidates
     import datetime as dt
     seven_days_ago = dt.datetime.utcnow() - dt.timedelta(days=7)
-    cvs = db.session.query(CVs).join(Users, CVs.user_id == Users.user_id).filter(
+    all_cvs = db.session.query(CVs).join(Users, CVs.user_id == Users.user_id).filter(
         CVs.user_id.isnot(None), 
         Users.is_visible == True,
         Users.last_active_date >= seven_days_ago
     ).all()
     
+    # Filter by keywords if provided
+    cvs = []
+    if filter_keywords:
+        for cv in all_cvs:
+            cv_raw_lower = cv.raw_text.lower() if cv.raw_text else ""
+            # Must match at least one keyword/variation
+            if any(kw in cv_raw_lower for kw in filter_keywords):
+                cvs.append(cv)
+    else:
+        cvs = all_cvs
+
     if not cvs:
-        flash('No visible candidates found in database.')
+        flash('No visible candidates found matching the criteria.')
         return redirect(url_for('employer_dashboard'))
         
     import torch
@@ -609,7 +623,8 @@ def employer_match_candidate(job_id):
 
         return render_template('candidate_match.html', 
                                job=job, 
-                               matches=match_list)
+                               matches=match_list,
+                               active_keywords=keywords_param)
     else:
         flash('Could not determine any matches.')
     return redirect(url_for('employer_dashboard'))

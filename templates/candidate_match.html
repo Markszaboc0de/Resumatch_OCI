@@ -247,6 +247,16 @@
                 </a>
             </div>
 
+            {% if active_keywords %}
+            <div class="alert alert-info d-flex align-items-center mb-4 shadow-sm" role="alert">
+                <i class="bi bi-funnel-fill me-2 fs-5"></i>
+                <div>
+                    <strong>Active Filter:</strong> Candidates must contain variations of: <span
+                        class="badge bg-white text-dark border ms-1">{{ active_keywords }}</span>
+                </div>
+            </div>
+            {% endif %}
+
             {% for match in matches %}
             <div class="match-card mb-4">
                 <div class="match-card-header">
