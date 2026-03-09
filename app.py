@@ -12,6 +12,7 @@ from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import json
 import io
+import html
 
 # Define base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -130,6 +131,7 @@ def clean_text(text):
     Robust text cleaning.
     """
     if not text: return ""
+    text = html.unescape(text)
     text = re.sub(r'<[^>]+>', ' ', text)
     text = re.sub(r'http\S+|www\S+|https\S+', ' ', text, flags=re.MULTILINE)
     # Use \w to keep all Unicode letters and numbers, replacing punctuation with spaces
@@ -953,7 +955,7 @@ def profile():
                     user_id=current_user.user_id,
                     filename=unique_filename,
                     file_path=None,
-                    raw_text="",
+                    raw_text=extracted_text,  # Save the actual text for match reasoning
                     parsed_tokens=vector_json
                 )
                 db.session.add(new_cv)
