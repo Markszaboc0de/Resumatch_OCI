@@ -271,6 +271,29 @@
                     </div>
 
                     <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
+                        <h6 class="fw-bold text-dark mb-3">Monthly Match Quota</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if current_user.match_limit is none %}
+                                <span class="fs-4 fw-bold text-success">Infinite</span>
+                                {% else %}
+                                <span class="fs-4 fw-bold text-primary">{{ current_user.match_limit -
+                                    current_user.matches_used_this_month }}</span> <span class="text-muted">/ {{
+                                    current_user.match_limit }} matches remaining</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if current_user.match_reset_date %}
+                                <small class="text-muted d-block">Resets on {{
+                                    current_user.match_reset_date.strftime('%Y-%m-%d') }}</small>
+                                {% else %}
+                                <small class="text-muted d-block">Next reset pending initial match</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
                         <div class="form-check form-switch d-flex align-items-center justify-content-between gap-3 m-0">
                             <div class="d-flex align-items-center gap-3">
                                 <input class="form-check-input ms-0" type="checkbox" role="switch" id="visibilitySwitch"

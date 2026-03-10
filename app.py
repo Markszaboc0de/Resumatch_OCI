@@ -53,6 +53,10 @@ class Users(UserMixin, db.Model):
     is_visible = db.Column(db.Boolean, default=True)
     last_active_date = db.Column(db.DateTime, default=datetime.utcnow)
     
+    match_limit = db.Column(db.Integer, nullable=True, default=10)
+    matches_used_this_month = db.Column(db.Integer, default=0)
+    match_reset_date = db.Column(db.DateTime, nullable=True)
+    
     def get_id(self):
         return str(self.user_id)
 
@@ -77,6 +81,10 @@ class Employers(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     company_name = db.Column(db.String(255), nullable=False)
     contact_info = db.Column(db.Text, nullable=True)
+    
+    match_limit = db.Column(db.Integer, nullable=True, default=10)
+    matches_used_this_month = db.Column(db.Integer, default=0)
+    match_reset_date = db.Column(db.DateTime, nullable=True)
 
 class Job_Descriptions(db.Model):
     __tablename__ = 'job_descriptions'
@@ -113,6 +121,12 @@ class Notifications(db.Model):
     message = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Admins(db.Model):
+    __tablename__ = 'admins'
+    admin_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -184,6 +198,27 @@ def extract_text_from_txt(filepath):
     except Exception as e:
         print(f"Error reading TXT: {e}")
         return ""
+
+def check_and_deduct_match(entity):
+    import datetime as dt
+    now = dt.datetime.utcnow()
+    
+    # 1. Reset check
+    if entity.match_reset_date is None or now >= entity.match_reset_date:
+        entity.matches_used_this_month = 0
+        entity.match_reset_date = now + dt.timedelta(days=30)
+        db.session.commit()
+        
+    # 2. Limit check
+    if entity.match_limit is None: # Infinite
+        return True
+        
+    if entity.matches_used_this_month < entity.match_limit:
+        entity.matches_used_this_month += 1
+        db.session.commit()
+        return True
+        
+    return False
 
 def load_cached_embeddings():
     """Helper to load pre-calculated job embeddings"""
@@ -530,6 +565,11 @@ def employer_match_candidate(job_id):
     if job.employer_id != employer_id:
         flash('Unauthorized.')
         return redirect(url_for('employer_dashboard'))
+        
+    employer = Employers.query.get(employer_id)
+    if not check_and_deduct_match(employer):
+        flash('You have reached your matching limit for this month.')
+        return redirect(url_for('employer_dashboard'))
     
     keywords_param = request.args.get('keywords', '')
     filter_keywords = [kw.strip().lower() for kw in keywords_param.split(',') if kw.strip()]
@@ -694,6 +734,100 @@ def mark_notification_read(notification_id):
     notif.is_read = True
     db.session.commit()
     return redirect(url_for('notifications'))
+
+# --- ADMIN ROUTES ---
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if 'admin_id' in session:
+        return redirect(url_for('admin_dashboard'))
+        
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        admin = Admins.query.filter_by(username=username).first()
+        
+        if admin and check_password_hash(admin.password_hash, password):
+            session['admin_id'] = admin.admin_id
+            session['admin_username'] = admin.username
+            flash(f'Welcome Admin {admin.username}!')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Invalid admin credentials.')
+            return redirect(url_for('admin_login'))
+            
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_id', None)
+    session.pop('admin_username', None)
+    flash('Logged out from Admin Portal.')
+    return redirect(url_for('landing'))
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    if 'admin_id' not in session:
+        flash('Please log in as an Admin.')
+        return redirect(url_for('admin_login'))
+        
+    users = Users.query.all()
+    employers = Employers.query.all()
+    
+    return render_template('admin_dashboard.html', users=users, employers=employers)
+
+@app.route('/admin/edit_user/<int:user_id>', methods=['POST'])
+def admin_edit_user(user_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('admin_login'))
+        
+    user = Users.query.get_or_404(user_id)
+    
+    user.is_visible = request.form.get('is_visible') == 'on'
+    limit_val = request.form.get('match_limit')
+    
+    if not limit_val or limit_val.strip() == '' or limit_val.strip().lower() == 'infinite':
+        user.match_limit = None
+    else:
+        try:
+            user.match_limit = int(limit_val)
+        except ValueError:
+            pass # Or handle error
+    
+    try:
+        user.matches_used_this_month = int(request.form.get('matches_used_this_month', user.matches_used_this_month))
+    except ValueError:
+        pass
+        
+    db.session.commit()
+    flash(f'User {user.username} updated.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/edit_employer/<int:employer_id>', methods=['POST'])
+def admin_edit_employer(employer_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('admin_login'))
+        
+    employer = Employers.query.get_or_404(employer_id)
+    
+    limit_val = request.form.get('match_limit')
+    
+    if not limit_val or limit_val.strip() == '' or limit_val.strip().lower() == 'infinite':
+        employer.match_limit = None
+    else:
+        try:
+            employer.match_limit = int(limit_val)
+        except ValueError:
+            pass
+            
+    try:
+        employer.matches_used_this_month = int(request.form.get('matches_used_this_month', employer.matches_used_this_month))
+    except ValueError:
+        pass
+        
+    db.session.commit()
+    flash(f'Employer {employer.company_name} updated.')
+    return redirect(url_for('admin_dashboard'))
 
 # Context Processor for Badge Count
 @app.context_processor
@@ -1053,6 +1187,10 @@ def set_main_cv(cv_id):
 @app.route('/dream_job')
 @login_required
 def dream_job():
+    if not check_and_deduct_match(current_user):
+        flash("You have reached your matching limit for this month.")
+        return redirect(url_for('profile'))
+
     # 1. Try to get the "Main" CV
     user_cv = CVs.query.filter_by(user_id=current_user.user_id, is_main=True).first()
     
@@ -1088,7 +1226,17 @@ def dream_job():
 
 
 @app.route('/matches/<int:cv_id>')
+@login_required
 def view_matches(cv_id):
+    cv = CVs.query.get_or_404(cv_id)
+    if cv.user_id != current_user.user_id:
+        flash('Unauthorized action.')
+        return redirect(url_for('profile'))
+        
+    if not check_and_deduct_match(current_user):
+        flash('You have reached your matching limit for this month.')
+        return redirect(url_for('profile'))
+
     # Fast Read: Query Precalc_Scores joined with Job_Descriptions
     results = db.session.query(Precalc_Scores, Job_Descriptions).\
         join(Job_Descriptions, Precalc_Scores.jd_id == Job_Descriptions.jd_id).\
