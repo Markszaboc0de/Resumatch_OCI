@@ -150,6 +150,10 @@ def clean_text(text):
     """
     if not text: return ""
     text = html.unescape(text)
+    
+    # Remove script and style tags and their contents
+    text = re.sub(r'<(script|style)[^>]*>.*?</\1>', ' ', text, flags=re.DOTALL | re.IGNORECASE)
+    
     text = re.sub(r'<[^>]+>', ' ', text)
     text = re.sub(r'http\S+|www\S+|https\S+', ' ', text, flags=re.MULTILINE)
     # Use \w to keep all Unicode letters and numbers, replacing punctuation with spaces

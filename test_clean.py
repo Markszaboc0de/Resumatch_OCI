@@ -1,13 +1,9 @@
 import re
-import html
+text = "<style>body{color:red;}</style><h1>Title</h1><p>Description</p>"
+t1 = re.sub(r'<[^>]+>', ' ', text)
+print("Old clean:", t1)
 
-def clean_text(text):
-    if not text: return ""
-    text = html.unescape(text) # convert &amp; -> &, &nbsp; -> space
-    text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'http\S+|www\S+|https\S+', ' ', text, flags=re.MULTILINE)
-    text = re.sub(r'[^\w\s]', ' ', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text.lower()
+t2 = re.sub(r'<(script|style)[^>]*>.*?</\1>', ' ', text, flags=re.DOTALL | re.IGNORECASE)
+t2 = re.sub(r'<[^>]+>', ' ', t2)
+print("New clean:", t2)
 
-print(clean_text("Hello &amp; welcome &lt;b&gt;fejlesztő&lt;/b&gt; &nbsp;&#39;hello&#39; !"))
