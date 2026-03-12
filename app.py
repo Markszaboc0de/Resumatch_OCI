@@ -283,6 +283,13 @@ def calculate_matches_background(cv_id, cv_embedding_list):
             job_ids = [job.jd_id for job in active_jobs]
             print(f"[{time.time()}] Encoding {len(job_texts)} jobs from DB...")
             job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+            
+            try:
+                cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+                torch.save({'embeddings': job_embeddings, 'ids': job_ids}, cache_path)
+                print(f"[{time.time()}] Saved job_embeddings cache.")
+            except Exception as e:
+                print(f"Failed to save cache: {e}")
         else:
             print(f"[{time.time()}] Using cached embeddings for {len(job_ids)} jobs (FAST).")
 
@@ -374,6 +381,13 @@ def refresh_all_matches():
         job_texts = [clean_text(job.raw_text) for job in jobs]
         job_ids = [job.jd_id for job in jobs]
         job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+        
+        try:
+            cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+            torch.save({'embeddings': job_embeddings, 'ids': job_ids}, cache_path)
+            print("Saved updated job embeddings to cache.")
+        except Exception as e:
+            print(f"Failed to save updated job cache: {e}")
 
         # 3. Compute Similarity Matrix
         # 3. Calculate Scores Matrix [N_CVs, M_Jobs]
@@ -1360,6 +1374,12 @@ def supersearch():
         job_texts = [clean_text(job.raw_text) for job in active_jobs]
         job_ids = [job.jd_id for job in active_jobs]
         job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+        
+        try:
+            cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+            torch.save({'embeddings': job_embeddings, 'ids': job_ids}, cache_path)
+        except Exception:
+            pass
     
     scores = util.cos_sim(ideal_embedding, job_embeddings)[0]
     
