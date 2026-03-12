@@ -252,6 +252,8 @@
                                         <th>Visible</th>
                                         <th>Match Limit</th>
                                         <th>Matches Used</th>
+                                        <th>SS Limit</th>
+                                        <th>SS Used</th>
                                         <th>Next Reset</th>
                                         <th class="text-end">Actions</th>
                                     </tr>
@@ -271,6 +273,9 @@
                                         </td>
                                         <td>{{ 'Infinite' if u.match_limit is none else u.match_limit }}</td>
                                         <td>{{ u.matches_used_this_month }}</td>
+                                        <td>{{ 'Infinite' if u.supersearch_limit is none else u.supersearch_limit }}
+                                        </td>
+                                        <td>{{ u.supersearch_used_this_month }}</td>
                                         <td>{{ u.match_reset_date.strftime('%Y-%m-%d') if u.match_reset_date else 'None'
                                             }}</td>
                                         <td class="text-end">
@@ -315,6 +320,24 @@
                                                             <input type="number" name="matches_used_this_month"
                                                                 class="form-control custom-input bg-white border"
                                                                 value="{{ u.matches_used_this_month }}">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label text-dark fw-semibold">Monthly
+                                                                Supersearch Limit</label>
+                                                            <input type="text" name="supersearch_limit"
+                                                                class="form-control custom-input bg-white border"
+                                                                value="{{ 'infinite' if u.supersearch_limit is none else u.supersearch_limit }}">
+                                                            <div class="form-text small">Enter 'infinite' or leave empty
+                                                                for no limit.</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label
+                                                                class="form-label text-dark fw-semibold">Supersearches
+                                                                Used
+                                                                This Month</label>
+                                                            <input type="number" name="supersearch_used_this_month"
+                                                                class="form-control custom-input bg-white border"
+                                                                value="{{ u.supersearch_used_this_month }}">
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer bg-light rounded-bottom-4">

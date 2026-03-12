@@ -7,6 +7,10 @@ with app.app_context():
     db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS match_limit INTEGER DEFAULT 10"))
     db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS matches_used_this_month INTEGER DEFAULT 0"))
     db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS match_reset_date TIMESTAMP"))
+    
+    db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS supersearch_limit INTEGER DEFAULT 5"))
+    db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS supersearch_used_this_month INTEGER DEFAULT 0"))
+    db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS supersearch_reset_date TIMESTAMP"))
 
     # Employers
     db.session.execute(text("ALTER TABLE employers ADD COLUMN IF NOT EXISTS match_limit INTEGER DEFAULT 10"))

@@ -57,6 +57,10 @@ class Users(UserMixin, db.Model):
     matches_used_this_month = db.Column(db.Integer, default=0)
     match_reset_date = db.Column(db.DateTime, nullable=True)
     
+    supersearch_limit = db.Column(db.Integer, nullable=True, default=5)
+    supersearch_used_this_month = db.Column(db.Integer, default=0)
+    supersearch_reset_date = db.Column(db.DateTime, nullable=True)
+    
     def get_id(self):
         return str(self.user_id)
 
@@ -215,6 +219,27 @@ def check_and_deduct_match(entity):
         
     if entity.matches_used_this_month < entity.match_limit:
         entity.matches_used_this_month += 1
+        db.session.commit()
+        return True
+        
+    return False
+
+def check_and_deduct_supersearch(entity):
+    import datetime as dt
+    now = dt.datetime.utcnow()
+    
+    # 1. Reset check
+    if entity.supersearch_reset_date is None or now >= entity.supersearch_reset_date:
+        entity.supersearch_used_this_month = 0
+        entity.supersearch_reset_date = now + dt.timedelta(days=30)
+        db.session.commit()
+        
+    # 2. Limit check
+    if entity.supersearch_limit is None: # Infinite
+        return True
+        
+    if entity.supersearch_used_this_month < entity.supersearch_limit:
+        entity.supersearch_used_this_month += 1
         db.session.commit()
         return True
         
@@ -799,6 +824,21 @@ def admin_edit_user(user_id):
     except ValueError:
         pass
         
+    ss_limit_val = request.form.get('supersearch_limit')
+    
+    if not ss_limit_val or ss_limit_val.strip() == '' or ss_limit_val.strip().lower() == 'infinite':
+        user.supersearch_limit = None
+    else:
+        try:
+            user.supersearch_limit = int(ss_limit_val)
+        except ValueError:
+            pass
+            
+    try:
+        user.supersearch_used_this_month = int(request.form.get('supersearch_used_this_month', user.supersearch_used_this_month))
+    except ValueError:
+        pass
+    
     db.session.commit()
     flash(f'User {user.username} updated.')
     return redirect(url_for('admin_dashboard'))
@@ -1285,6 +1325,68 @@ def suggestions():
         return jsonify(suggestions)
     
     return jsonify([]) 
+
+@app.route('/api/supersearch', methods=['POST'])
+@login_required
+def supersearch():
+    if not check_and_deduct_supersearch(current_user):
+        return jsonify({'error': 'You have reached your Supersearch limit for this month.'}), 403
+
+    data = request.get_json()
+    if not data or 'ideal_job_description' not in data:
+        return jsonify({'error': 'Missing ideal_job_description'}), 400
+
+    ideal_desc = data['ideal_job_description']
+    if not ideal_desc.strip():
+        return jsonify({'error': 'Description cannot be empty'}), 400
+
+    # Clean text and encode
+    cleaned_desc = clean_text(ideal_desc)
+    ideal_embedding = nlp_model.encode(cleaned_desc, convert_to_tensor=True)
+
+    # Calculate matches
+    import torch
+    job_embeddings, job_ids = load_cached_embeddings()
+    active_jobs = Job_Descriptions.query.filter_by(active_status=True).all()
+    
+    if not active_jobs:
+        return jsonify({'matches': [], 'remaining': 'Infinite' if current_user.supersearch_limit is None else current_user.supersearch_limit - current_user.supersearch_used_this_month})
+
+    if job_embeddings is None:
+        job_texts = [clean_text(job.raw_text) for job in active_jobs]
+        job_ids = [job.jd_id for job in active_jobs]
+        job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+    
+    scores = util.cos_sim(ideal_embedding, job_embeddings)[0]
+    
+    active_job_ids = {job.jd_id: job for job in active_jobs}
+    
+    all_scores = []
+    for idx, score in enumerate(scores):
+        if job_ids[idx] in active_job_ids:
+            all_scores.append((float(score), job_ids[idx]))
+
+    top_matches = sorted(all_scores, key=lambda x: x[0], reverse=True)[:3]
+
+    matches_response = []
+    for score, jd_id in top_matches:
+        job = active_job_ids[jd_id]
+        matches_response.append({
+            "id": job.jd_id,
+            "title": job.title,
+            "company": job.company,
+            "description": job.raw_text[:300] + "...",
+            "score": round(score * 100, 1),
+            "url": job.url,
+            "city": job.city,
+            "country": job.country
+        })
+
+    remaining = 'Infinite' if current_user.supersearch_limit is None else current_user.supersearch_limit - current_user.supersearch_used_this_month
+    return jsonify({
+        'matches': matches_response,
+        'remaining': remaining
+    })
 
 # Initialize DB
 with app.app_context():

@@ -294,6 +294,29 @@
                     </div>
 
                     <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
+                        <h6 class="fw-bold text-dark mb-3">Monthly Supersearch Quota</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if current_user.supersearch_limit is none %}
+                                <span class="fs-4 fw-bold text-success" id="ssRemainingBadge">Infinite</span>
+                                {% else %}
+                                <span class="fs-4 fw-bold text-primary" id="ssRemainingBadge">{{
+                                    current_user.supersearch_limit - current_user.supersearch_used_this_month }}</span>
+                                <span class="text-muted">/ {{ current_user.supersearch_limit }} matches remaining</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if current_user.supersearch_reset_date %}
+                                <small class="text-muted d-block">Resets on {{
+                                    current_user.supersearch_reset_date.strftime('%Y-%m-%d') }}</small>
+                                {% else %}
+                                <small class="text-muted d-block">Next reset pending initial match</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
                         <div class="form-check form-switch d-flex align-items-center justify-content-between gap-3 m-0">
                             <div class="d-flex align-items-center gap-3">
                                 <input class="form-check-input ms-0" type="checkbox" role="switch" id="visibilitySwitch"
@@ -400,10 +423,107 @@
                     </div>
                     {% endif %}
             </div>
+
+            <div class="form-card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3"
+                    style="border-bottom: 1px solid #edf2f7;">
+                    <h3 class="form-card-header mb-0" style="border-bottom: none; padding-bottom: 0;">Supersearch</h3>
+                </div>
+                <div class="mb-3">
+                    <p class="text-muted small">Describe your ideal job in as much detail as possible to find the
+                        absolute best matches from our platform using AI.</p>
+                    <textarea id="idealJobDescription" class="form-control custom-input mb-3" rows="5"
+                        placeholder="I am looking for a software engineering position focused on backend development using Python..."></textarea>
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <button id="btnSupersearch" class="btn btn-warning btn-custom shadow-sm"><i
+                            class="bi bi-search me-2"></i>Find Most Similar Jobs</button>
+                    <div id="supersearchLoading" class="spinner-border text-warning d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="supersearchError" class="alert alert-danger d-none"></div>
+                <div id="supersearchResults" class="row g-4 d-none">
+                    <!-- Results dynamically inserted here -->
+                </div>
+            </div>
         </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('btnSupersearch').addEventListener('click', async function () {
+            const description = document.getElementById('idealJobDescription').value;
+            const errorDiv = document.getElementById('supersearchError');
+            const resultsDiv = document.getElementById('supersearchResults');
+            const loading = document.getElementById('supersearchLoading');
+            const btn = document.getElementById('btnSupersearch');
+
+            errorDiv.classList.add('d-none');
+            resultsDiv.classList.add('d-none');
+
+            if (!description.trim()) {
+                errorDiv.textContent = 'Please enter an ideal job description.';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            loading.classList.remove('d-none');
+            resultsDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/supersearch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ideal_job_description: description })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch matches.');
+                }
+
+                const remainingBadge = document.getElementById('ssRemainingBadge');
+                if (remainingBadge) {
+                    remainingBadge.textContent = data.remaining;
+                }
+
+                if (data.matches.length === 0) {
+                    errorDiv.textContent = 'No suitable matches found.';
+                    errorDiv.classList.remove('d-none');
+                } else {
+                    data.matches.forEach((job, index) => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-4';
+                        col.innerHTML = `
+                            <div class="card h-100 shadow-sm border-0" style="border-radius: 12px; transition: transform 0.2s; cursor: pointer;">
+                                <div class="card-body p-4 d-flex flex-column">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="badge bg-warning text-dark">#${index + 1}</span>
+                                        <span class="fw-bold text-success">${job.score}% Match</span>
+                                    </div>
+                                    <h5 class="fw-bold text-primary mb-1">${job.title}</h5>
+                                    <h6 class="text-muted mb-3">${job.company}</h6>
+                                    <p class="text-muted small flex-grow-1">${job.description}</p>
+                                    ${job.url ? `<a href="${job.url}" target="_blank" class="btn btn-outline-primary btn-sm mt-3 w-100">Apply Now</a>` : `<button class="btn btn-outline-secondary btn-sm mt-3 w-100" disabled>No Link</button>`}
+                                </div>
+                            </div>
+                        `;
+                        resultsDiv.appendChild(col);
+                    });
+                    resultsDiv.classList.remove('d-none');
+                }
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                loading.classList.add('d-none');
+            }
+        });
+    </script>
 </body>
 
 </html>
