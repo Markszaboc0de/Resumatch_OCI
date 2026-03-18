@@ -104,6 +104,9 @@ class Job_Descriptions(db.Model):
     active_status = db.Column(db.Boolean, default=True)
     is_native = db.Column(db.Boolean, default=False)
     employer_id = db.Column(db.Integer, db.ForeignKey('employers.employer_id'), nullable=True)
+    
+    sync_active = db.Column(db.Boolean, default=False)
+    is_direct_upload = db.Column(db.Boolean, default=True)
 
     employer = db.relationship('Employers', backref=db.backref('jobs', lazy=True))
 

@@ -2,52 +2,85 @@ from app import app, db, Job_Descriptions
 from sqlalchemy import text
 from recalculate import recalculate_jobs, refresh_all_matches
 
-def import_scraped_jobs():
+def sync_scraped_jobs():
     with app.app_context():
-        # Get all rows from the scraped_jobs table
-        query = text("SELECT jd_id, company, title, city, country, raw_text, url FROM scraped_jobs")
-        result = db.session.execute(query)
-        rows = result.fetchall()
+        print("--- Step A: Mark Phase ---")
+        # Set sync_active = False for all external jobs
+        db.session.execute(text("UPDATE job_descriptions SET sync_active = FALSE WHERE is_direct_upload = FALSE"))
         
-        if not rows:
-            print("No new scraped jobs found in 'scraped_jobs' table.")
+        print("--- Step B: Process/Upsert Phase ---")
+        # Read from scraped_jobs table
+        try:
+            result = db.session.execute(text("SELECT jd_id, company, title, city, country, raw_text, url FROM scraped_jobs"))
+            rows = result.fetchall()
+        except Exception as e:
+            print("Error reading from scraped_jobs. Does the table exist? Run create_scraped_jobs_table.py first.")
+            print(f"Details: {e}")
             return
-
-        print(f"Importing {len(rows)} new scoped jobs into the main Job_Descriptions table...")
+            
+        updated_count = 0
+        inserted_count = 0
         
         for row in rows:
-            # Extract data from the row
             _, company, title, city, country, raw_text, url = row
             
-            # Create the main job listing
-            new_job = Job_Descriptions(
-                title=title,
-                company=company,
-                city=city,
-                country=country,
-                raw_text=raw_text,
-                url=url,
-                is_intern=False,      # Defaults
-                active_status=True,   # Defaults
-                is_native=False       # Defaults usually used for external links
-            )
-            db.session.add(new_job)
-
-        # Clear out the scraped_jobs table so we don't import them twice next time
-        db.session.execute(text("DELETE FROM scraped_jobs"))
-        
-        # Save to database
+            # Check if this precise URL already exists
+            existing_job = None
+            if url:
+                existing_job = Job_Descriptions.query.filter_by(url=url).first()
+                
+            if existing_job:
+                # Update existing record
+                existing_job.sync_active = True
+                existing_job.company = company
+                existing_job.title = title
+                existing_job.city = city
+                existing_job.country = country
+                existing_job.raw_text = raw_text
+                updated_count += 1
+            else:
+                # Insert new external job
+                new_job = Job_Descriptions(
+                    title=title,
+                    company=company,
+                    city=city,
+                    country=country,
+                    raw_text=raw_text,
+                    url=url,
+                    is_intern=False,
+                    active_status=True,
+                    is_native=False,
+                    is_direct_upload=False,
+                    sync_active=True
+                )
+                db.session.add(new_job)
+                inserted_count += 1
+                
+        # Flush or commit upserts
         db.session.commit()
-        print("Successfully moved jobs to main Jobs table.")
+        print(f"Upsert phase complete. Updated: {updated_count}, Inserted: {inserted_count}")
         
-        # Perform calculations for the new jobs
-        print("Triggering recalculation of job embeddings...")
-        recalculate_jobs()
+        print("--- Step C: Cleanup/Sweep Phase ---")
+        # Delete external jobs that weren't in the incoming payload
+        # Find them first so we can report how many are deleted
+        deleted_count = db.session.execute(text("DELETE FROM job_descriptions WHERE sync_active = FALSE AND is_direct_upload = FALSE")).rowcount
         
-        print("Triggering match refresher against all candidates...")
-        refresh_all_matches()
+        # Clear the staging table
+        db.session.execute(text("DELETE FROM scraped_jobs"))
+        db.session.commit()
         
-        print("Import and recalculation entirely complete! The new jobs are now displayed on the website.")
+        print(f"Sweep complete. Deleted {deleted_count} stale external jobs.")
+        print("Cleaned up scraped_jobs staging table.")
+        
+        # Recalculate if there were changes
+        if updated_count > 0 or inserted_count > 0 or deleted_count > 0:
+            print("Triggering recalculation and match refresh...")
+            recalculate_jobs()
+            refresh_all_matches()
+        else:
+            print("No changes detected. Skipping recalculation to avoid unnecessary CPU load.")
+
+        print("Synchronization completed successfully!")
 
 if __name__ == "__main__":
-    import_scraped_jobs()
+    sync_scraped_jobs()
