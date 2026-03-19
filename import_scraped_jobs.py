@@ -14,8 +14,14 @@ def sync_scraped_jobs():
             sql_query = """
                 SELECT jd_id, company, title, city, country, raw_text, url 
                 FROM scraped_jobs 
-                WHERE title ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
-                   OR raw_text ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
+                WHERE (
+                       title ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
+                    OR raw_text ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
+                )
+                AND (
+                       country ~* '\\b(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\b'
+                    OR raw_text ~* '\\b(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\b'
+                )
             """
             result = db.session.execute(text(sql_query))
             rows = result.fetchall()
