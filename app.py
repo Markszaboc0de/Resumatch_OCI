@@ -315,9 +315,9 @@ def calculate_matches_background(cv_id, cv_embedding_list):
                 'similarity_score': similarity
             })
             
-        # 5. SORT and KEEP TOP 10 ONLY
-        # This drastically reduces DB writes (20k -> 10)
-        top_matches = sorted(all_scores, key=lambda x: x['similarity_score'], reverse=True)[:10]
+        # 5. SORT and KEEP TOP 3 ONLY
+        # This drastically reduces DB writes
+        top_matches = sorted(all_scores, key=lambda x: x['similarity_score'], reverse=True)[:3]
 
         # 6. Insert into Precalc_Scores
         new_scores_objects = [Precalc_Scores(**match) for match in top_matches]
@@ -414,8 +414,8 @@ def refresh_all_matches():
                         'similarity_score': float(score)
                     })
                 
-                # Sort and Keep Top 10
-                top_10 = sorted(cv_matches, key=lambda x: x['similarity_score'], reverse=True)[:10]
+                # Sort and Keep Top 3
+                top_10 = sorted(cv_matches, key=lambda x: x['similarity_score'], reverse=True)[:3]
                 
                 for match in top_10:
                     new_scores_objects.append(Precalc_Scores(**match))
