@@ -73,7 +73,16 @@ def sync_scraped_jobs():
         print(f"Upsert phase complete. Updated: {updated_count}, Inserted: {inserted_count}")
         
         print("--- Step C: Cleanup/Sweep Phase ---")
-        # Delete external jobs that weren't in the incoming payload
+        # 1. First cascade deletions for any dependent matching scores or notifications
+        # This prevents the psycopg2 ForeignKeyViolation error.
+        stale_jobs_query = """
+            SELECT jd_id FROM job_descriptions 
+            WHERE sync_active = FALSE AND is_direct_upload = FALSE
+        """
+        db.session.execute(text(f"DELETE FROM precalc_scores WHERE jd_id IN ({stale_jobs_query})"))
+        db.session.execute(text(f"DELETE FROM notifications WHERE job_id IN ({stale_jobs_query})"))
+
+        # 2. Safely delete the stale external jobs now that constraints are clear
         # Find them first so we can report how many are deleted
         deleted_count = db.session.execute(text("DELETE FROM job_descriptions WHERE sync_active = FALSE AND is_direct_upload = FALSE")).rowcount
         
