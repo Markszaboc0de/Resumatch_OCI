@@ -10,13 +10,13 @@ def sync_scraped_jobs():
         
         print("--- Step B: Process/Upsert Phase ---")
         # Read from scraped_jobs table
-        try:
-            sql_query = """
+        try: 
+            sql_query = """ 
                 SELECT jd_id, company, title, city, country, raw_text, url 
                 FROM scraped_jobs 
                 WHERE (
-                       title ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
-                    OR raw_text ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
+                       title ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\b'
+                    OR raw_text ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\b'
                 )
                 AND (
                        country ~* '\\b(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\b'
