@@ -11,7 +11,13 @@ def sync_scraped_jobs():
         print("--- Step B: Process/Upsert Phase ---")
         # Read from scraped_jobs table
         try:
-            result = db.session.execute(text("SELECT jd_id, company, title, city, country, raw_text, url FROM scraped_jobs"))
+            sql_query = """
+                SELECT jd_id, company, title, city, country, raw_text, url 
+                FROM scraped_jobs 
+                WHERE title ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
+                   OR raw_text ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate)\\b'
+            """
+            result = db.session.execute(text(sql_query))
             rows = result.fetchall()
         except Exception as e:
             print("Error reading from scraped_jobs. Does the table exist? Run create_scraped_jobs_table.py first.")
