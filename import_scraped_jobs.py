@@ -15,12 +15,12 @@ def sync_scraped_jobs():
                 SELECT jd_id, company, title, city, country, raw_text, url 
                 FROM scraped_jobs 
                 WHERE (
-                       title ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\b'
-                    OR raw_text ~* '\\b(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\b'
+                       title ~* '\\y(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\y'
+                    OR raw_text ~* '\\y(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\y'
                 )
                 AND (
-                       country ~* '\\b(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\b'
-                    OR raw_text ~* '\\b(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\b'
+                       country ~* '\\y(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\y'
+                    OR raw_text ~* '\\y(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\y'
                 )
             """
             result = db.session.execute(text(sql_query))
