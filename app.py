@@ -13,6 +13,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import json
 import io
 import html
+from gliner import GLiNER
 
 # Define base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,9 +38,10 @@ login_manager.login_view = 'login'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Load NLP Model (Global) - Loaded once at startup
-print("Loading NLP Model...")
-nlp_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-print("NLP Model Loaded.")
+print("Loading NLP & NER Models...")
+nlp_model = SentenceTransformer("BAAI/bge-m3")
+ner_model = GLiNER.from_pretrained("urchade/gliner_medium-v2.1")
+print("Models Loaded.")
 
 # --- MODELS ---
 
@@ -75,6 +77,7 @@ class CVs(db.Model):
     file_path = db.Column(db.String(512), nullable=True) # Store full path
     raw_text = db.Column(db.Text, nullable=False)
     parsed_tokens = db.Column(db.Text, nullable=True) # JSON or specific format if needed
+    extracted_skills = db.Column(db.Text, nullable=True) # JSON list of extracted NER skills
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
     is_main = db.Column(db.Boolean, default=False)
 
@@ -100,6 +103,7 @@ class Job_Descriptions(db.Model):
     raw_text = db.Column(db.Text, nullable=False)
     url = db.Column(db.Text, nullable=True)
     parsed_tokens = db.Column(db.Text, nullable=True)
+    extracted_skills = db.Column(db.Text, nullable=True) # JSON list of extracted NER skills
     is_intern = db.Column(db.Boolean, default=False)
     active_status = db.Column(db.Boolean, default=True)
     is_native = db.Column(db.Boolean, default=False)
@@ -164,32 +168,37 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text.lower()
 
-def extract_match_reasons(cv_text, jd_text):
+def extract_skills_from_text(text):
+    if not text: return "[]"
+    try:
+        labels = ["Skill", "Tool", "Technology", "Framework", "Software"]
+        # Max length to avoid massive memory usage or slow inference
+        ents = ner_model.predict_entities(text[:3000].lower(), set(labels))
+        # Deduplicate
+        skills = {ent['text'].strip() for ent in ents if len(ent['text'].strip()) >= 2}
+        return json.dumps(list(skills))
+    except Exception as e:
+        print(f"NER Error: {e}")
+        return "[]"
+
+def extract_match_reasons(cv_skills_json, jd_skills_json):
     """
-    Extracts the top 3 overlapping words (length >= 5) between a CV and a Job Description.
-    If 0 are found, returns a generic 'No exact keyword matches found' message.
+    Extracts the top overlapping skills between a CV and a Job Description.
     """
-    if not cv_text or not jd_text:
-        return ["No exact keyword matches found"]
+    if not cv_skills_json or not jd_skills_json:
+        return ["No exact skill matches found"]
         
-    cv_words = set(clean_text(cv_text).split())
-    jd_words = set(clean_text(jd_text).split())
-    
-    # Find commonly shared words
-    overlap = cv_words.intersection(jd_words)
-    
-    # Filter for words >= 5 chars, assuming these are more meaningful skills/keywords
-    meaningful = [w for w in overlap if len(w) >= 5 and not w.isdigit()]
-    
-    # Sort by length descending, as a simple heuristic for specificity
-    meaningful.sort(key=len, reverse=True)
-    
-    reasons = meaningful[:3]
-    
-    if len(reasons) == 0:
-        return ["No exact keyword matches found"]
-                
-    return reasons
+    try:
+        cv_skills = set(json.loads(cv_skills_json))
+        jd_skills = set(json.loads(jd_skills_json))
+        
+        overlap = cv_skills.intersection(jd_skills)
+        if not overlap:
+            return ["No exact skill matches found"]
+            
+        return list(overlap)[:3]
+    except Exception:
+        return ["No exact skill matches found"]
 
 def extract_text_from_pdf(filepath):
     try:
@@ -305,14 +314,30 @@ def calculate_matches_background(cv_id, cv_embedding_list):
         # util.cos_sim returns [1, N]
         scores = util.cos_sim(cv_embedding, job_embeddings)[0]
 
+        # Fetch skills for Hybrid Scoring
+        cv = CVs.query.get(cv_id)
+        cv_skills = set(json.loads(cv.extracted_skills or "[]")) if cv else set()
+        active_jobs_for_skills = Job_Descriptions.query.filter(Job_Descriptions.jd_id.in_(job_ids)).all()
+        job_skills_map = {job.jd_id: set(json.loads(job.extracted_skills or "[]")) for job in active_jobs_for_skills}
+
         # 4. Prepare Scores List
         all_scores = []
         for idx, score in enumerate(scores):
-            similarity = float(score)
+            semantic_score = float(score)
+            jd_id = job_ids[idx]
+            
+            job_skills = job_skills_map.get(jd_id, set())
+            if len(job_skills) == 0:
+                final_score = semantic_score
+            else:
+                overlap = cv_skills.intersection(job_skills)
+                ner_score = len(overlap) / len(job_skills)
+                final_score = (semantic_score * 0.7) + (ner_score * 0.3)
+                
             all_scores.append({
                 'cv_id': cv_id,
-                'jd_id': job_ids[idx],
-                'similarity_score': similarity
+                'jd_id': jd_id,
+                'similarity_score': final_score
             })
             
         # 5. SORT and KEEP TOP 3 ONLY
@@ -398,20 +423,33 @@ def refresh_all_matches():
         if len(cv_embeddings) > 0 and len(job_embeddings) > 0:
             all_scores_matrix = util.cos_sim(cv_embeddings, job_embeddings)
             
+            # Fetch skills map for fast memory lookup
+            job_skills_map = {job.jd_id: set(json.loads(job.extracted_skills or "[]")) for job in jobs}
+            
             # 4. Save to DB (Optimized)
             new_scores_objects = []
             
             for i, cv in enumerate(cvs):
-                # Get scores for this CV against all jobs
-                cv_scores = all_scores_matrix[i] # Tensor shape [M_Jobs]
+                cv_scores = all_scores_matrix[i]
+                cv_skills = set(json.loads(cv.extracted_skills or "[]"))
                 
-                # Pair with Job IDs and Score
                 cv_matches = []
                 for j, score in enumerate(cv_scores):
+                    semantic_score = float(score)
+                    jd_id = job_ids[j]
+                    
+                    job_skills = job_skills_map.get(jd_id, set())
+                    if len(job_skills) == 0:
+                        final_score = semantic_score
+                    else:
+                        overlap = cv_skills.intersection(job_skills)
+                        ner_score = len(overlap) / len(job_skills)
+                        final_score = (semantic_score * 0.7) + (ner_score * 0.3)
+                        
                     cv_matches.append({
                         'cv_id': cv.cv_id,
-                        'jd_id': job_ids[j],
-                        'similarity_score': float(score)
+                        'jd_id': jd_id,
+                        'similarity_score': final_score
                     })
                 
                 # Sort and Keep Top 3
@@ -692,7 +730,7 @@ def employer_match_candidate(job_id):
             candidate_user = Users.query.get(cv_item.user_id)
             
             # Extract Match Reasons
-            reasons = extract_match_reasons(cv_item.raw_text, job.raw_text)
+            reasons = extract_match_reasons(cv_item.extracted_skills, job.extracted_skills)
             
             # Check if already notified
             has_notified = False
@@ -1160,8 +1198,9 @@ def profile():
                 # Strip null bytes that crash PostgreSQL
                 extracted_text = extracted_text.replace('\x00', '')
                 
-                # 3. Clean Text and Encode
+                # 3. Clean Text, Encode, and Extract NER Skills
                 cleaned_text = clean_text(extracted_text)
+                cv_skills_json = extract_skills_from_text(cleaned_text)
                 cv_embedding = nlp_model.encode(cleaned_text, convert_to_tensor=False)
                 vector_json = json.dumps(cv_embedding.tolist())
                 
@@ -1171,7 +1210,8 @@ def profile():
                     filename=unique_filename,
                     file_path=None,
                     raw_text=extracted_text,  # Save the actual text for match reasoning
-                    parsed_tokens=vector_json
+                    parsed_tokens=vector_json,
+                    extracted_skills=cv_skills_json
                 )
                 db.session.add(new_cv)
                 db.session.commit()
@@ -1311,7 +1351,7 @@ def view_matches(cv_id):
 
     matches = []
     for score_entry, job in results:
-        reasons = extract_match_reasons(cv_text, job.raw_text)
+        reasons = extract_match_reasons(cv.extracted_skills, job.extracted_skills)
         matches.append({
             "id": job.jd_id,
             "title": job.title,

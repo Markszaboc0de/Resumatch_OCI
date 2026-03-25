@@ -1,6 +1,6 @@
 import os
 import json
-from app import app, db, CVs, Job_Descriptions, extract_text_from_pdf, extract_text_from_txt, clean_text, nlp_model, refresh_all_matches
+from app import app, db, CVs, Job_Descriptions, extract_text_from_pdf, extract_text_from_txt, clean_text, nlp_model, refresh_all_matches, extract_skills_from_text
 
 def recalculate_cvs():
     with app.app_context():
@@ -24,6 +24,7 @@ def recalculate_cvs():
             
             if cv.raw_text:
                 cleaned = clean_text(cv.raw_text).replace('\x00', '')
+                cv.extracted_skills = extract_skills_from_text(cleaned)
                 vec = nlp_model.encode(cleaned, convert_to_tensor=False)
                 cv.parsed_tokens = json.dumps(vec.tolist())
                 print(f"Re-embedded CV ID {cv.cv_id}")
@@ -38,6 +39,7 @@ def recalculate_jobs():
         for job in jobs:
             if job.raw_text:
                 cleaned = clean_text(job.raw_text).replace('\x00', '')
+                job.extracted_skills = extract_skills_from_text(cleaned)
                 job.parsed_tokens = cleaned
                 print(f"Updated parsed_tokens (cleaned text) for Job {job.jd_id}")
         db.session.commit()
