@@ -3,7 +3,7 @@ import os
 import threading
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from pypdf import PdfReader
+import fitz # PyMuPDF
 import re
 from flask_sqlalchemy import SQLAlchemy
 from sentence_transformers import SentenceTransformer, util
@@ -193,10 +193,10 @@ def extract_match_reasons(cv_text, jd_text):
 
 def extract_text_from_pdf(filepath):
     try:
-        reader = PdfReader(filepath)
         text = ""
-        for page in reader.pages:
-            text += page.extract_text() or ""
+        with fitz.open(filepath) as doc:
+            for page in doc:
+                text += page.get_text() or ""
         return text
     except Exception as e:
         print(f"Error reading PDF: {e}")
@@ -1151,9 +1151,9 @@ def profile():
                 file_bytes = file.read()
                 extracted_text = ""
                 if filename.lower().endswith('.pdf'):
-                    reader = PdfReader(io.BytesIO(file_bytes))
-                    for page in reader.pages:
-                        extracted_text += page.extract_text() or ""
+                    with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+                        for page in doc:
+                            extracted_text += page.get_text() or ""
                 elif filename.lower().endswith('.txt'):
                     extracted_text = file_bytes.decode('utf-8', errors='ignore')
                 

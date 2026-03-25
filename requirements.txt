@@ -1,5 +1,5 @@
 flask
-pypdf
+pymupdf
 werkzeug
 pandas
 Flask-SQLAlchemy
