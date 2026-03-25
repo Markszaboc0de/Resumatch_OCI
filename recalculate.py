@@ -38,10 +38,12 @@ def recalculate_jobs():
         print(f"Found {len(jobs)} Jobs to process.")
         for job in jobs:
             if job.raw_text:
-                cleaned = clean_text(job.raw_text).replace('\x00', '')
-                job.extracted_skills = extract_skills_from_text(cleaned)
-                job.parsed_tokens = cleaned
-                print(f"Updated parsed_tokens (cleaned text) for Job {job.jd_id}")
+                if not job.extracted_skills or not job.parsed_tokens or not job.parsed_tokens.startswith('['):
+                    cleaned = clean_text(job.raw_text).replace('\x00', '')
+                    job.extracted_skills = extract_skills_from_text(cleaned)
+                    vec = nlp_model.encode(cleaned, convert_to_tensor=False)
+                    job.parsed_tokens = json.dumps(vec.tolist())
+                    print(f"Computed Vector & Skills for Job {job.jd_id}")
         db.session.commit()
         
         # Also remove the cached job embeddings file to force re-generation

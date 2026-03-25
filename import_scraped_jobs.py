@@ -1,6 +1,6 @@
 from app import app, db, Job_Descriptions
 from sqlalchemy import text
-from recalculate import recalculate_jobs, refresh_all_matches
+from recalculate import recalculate_jobs
 
 def sync_scraped_jobs():
     with app.app_context():
@@ -48,7 +48,10 @@ def sync_scraped_jobs():
                 existing_job.title = title
                 existing_job.city = city
                 existing_job.country = country
-                existing_job.raw_text = raw_text
+                if existing_job.raw_text != raw_text:
+                    existing_job.raw_text = raw_text
+                    existing_job.parsed_tokens = None
+                    existing_job.extracted_skills = None
                 updated_count += 1
             else:
                 # Insert new external job
@@ -95,9 +98,9 @@ def sync_scraped_jobs():
         
         # Recalculate if there were changes
         if updated_count > 0 or inserted_count > 0 or deleted_count > 0:
-            print("Triggering recalculation and match refresh...")
+            print("Triggering cache rebuild for new jobs...")
             recalculate_jobs()
-            refresh_all_matches()
+            # Match calculation is now handled JIT during user login
         else:
             print("No changes detected. Skipping recalculation to avoid unnecessary CPU load.")
 

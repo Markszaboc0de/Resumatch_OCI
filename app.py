@@ -284,26 +284,36 @@ def calculate_matches_background(cv_id, cv_embedding_list):
         job_embeddings, job_ids = load_cached_embeddings()
         
         if job_embeddings is None:
-            # Fallback to DB fetch (Slow path)
-            print(f"[{time.time()}] Cache miss. Fetching from DB (SLOW)...")
+            print(f"[{time.time()}] Cache miss! Rebuilding cache from DB vectors...")
             active_jobs = Job_Descriptions.query.filter_by(active_status=True).all()
             if not active_jobs:
                 print("No active jobs found for matching.")
                 return 
 
-            job_texts = [clean_text(job.raw_text) for job in active_jobs] # Or use cleaned text if stored
-            job_ids = [job.jd_id for job in active_jobs]
-            print(f"[{time.time()}] Encoding {len(job_texts)} jobs from DB...")
-            job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+            job_embeddings_list = []
+            job_ids = []
+            for job in active_jobs:
+                if job.parsed_tokens and job.parsed_tokens.startswith('['):
+                    try:
+                        job_embeddings_list.append(json.loads(job.parsed_tokens))
+                        job_ids.append(job.jd_id)
+                    except:
+                        pass
+            
+            if not job_embeddings_list:
+                print("No valid encoded jobs found in DB! Make sure you run recalculate.py first.")
+                return
+                
+            job_embeddings = torch.tensor(job_embeddings_list)
             
             try:
                 cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
                 torch.save({'embeddings': job_embeddings, 'ids': job_ids}, cache_path)
-                print(f"[{time.time()}] Saved job_embeddings cache.")
+                print(f"[{time.time()}] Successfully rebuilt job_embeddings.pt cache with {len(job_ids)} jobs.")
             except Exception as e:
-                print(f"Failed to save cache: {e}")
+                print(f"Failed to save temporary cache: {e}")
         else:
-            print(f"[{time.time()}] Using cached embeddings for {len(job_ids)} jobs (FAST).")
+            print(f"[{time.time()}] Loaded cached embeddings for {len(job_ids)} jobs (FAST).")
 
         # 2. Encode CV
         print(f"[{time.time()}] Using Pre-encoded User CV...")
@@ -405,10 +415,22 @@ def refresh_all_matches():
             
         cv_embeddings = torch.tensor(cv_embeddings_list)
 
-        # Encode Jobs
-        job_texts = [clean_text(job.raw_text) for job in jobs]
-        job_ids = [job.jd_id for job in jobs]
-        job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+        # Load Job Embeddings from DB
+        job_embeddings_list = []
+        job_ids = []
+        for job in jobs:
+            if job.parsed_tokens and job.parsed_tokens.startswith('['):
+                try:
+                    job_embeddings_list.append(json.loads(job.parsed_tokens))
+                    job_ids.append(job.jd_id)
+                except:
+                    pass
+                    
+        if not job_embeddings_list:
+            print("No valid encoded jobs found! Run recalculate.py first.")
+            return
+            
+        job_embeddings = torch.tensor(job_embeddings_list)
         
         try:
             cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
@@ -1002,6 +1024,30 @@ def login():
 
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
+            
+            # Just-In-Time (JIT) Match Calculation
+            try:
+                cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+                if os.path.exists(cache_path):
+                    cache_mtime = os.path.getmtime(cache_path)
+                    cache_time = datetime.utcfromtimestamp(cache_mtime)
+                    
+                    # If this user hasn't calculated matches since the newest jobs arrived
+                    if not user.last_active_date or user.last_active_date < cache_time:
+                        print(f"JIT Matching trigger: Cache updated {cache_time}. Re-evaluating CVs for User {user.user_id}")
+                        user_cvs = CVs.query.filter_by(user_id=user.user_id).all()
+                        for cv in user_cvs:
+                            if cv.parsed_tokens:
+                                vec = json.loads(cv.parsed_tokens)
+                                thread = threading.Thread(target=calculate_matches_background, args=(cv.cv_id, vec))
+                                thread.start()
+            except Exception as e:
+                print(f"JIT matching evaluation failed: {e}")
+                
+            # Update last active timestamp so it doesn't infinite loop on next refresh
+            user.last_active_date = datetime.utcnow()
+            db.session.commit()
+            
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid email or password.')
