@@ -1125,13 +1125,13 @@ def profile():
 
         if 'resume' not in request.files:
             flash('No file part')
-            return redirect(request.url)
+            return redirect(url_for('profile'))
         
         file = request.files['resume']
         
         if file.filename == '':
             flash('No selected file')
-            return redirect(request.url)
+            return redirect(url_for('profile'))
             
         file.seek(0, os.SEEK_END)
         file_size = file.tell()
@@ -1139,7 +1139,7 @@ def profile():
         
         if file_size > 5 * 1024 * 1024:
             flash('CV file size exceeds the 5MB limit.')
-            return redirect(request.url)
+            return redirect(url_for('profile'))
             
         if file and allowed_file(file.filename):
             try:
@@ -1185,8 +1185,9 @@ def profile():
             except Exception as e:
                 db.session.rollback()
                 print(f"Error during upload: {e}")
-                flash(f'An error occurred during upload: {str(e)}')
-                return redirect(request.url)
+                error_str = str(e)
+                flash(f'An error occurred during upload: {error_str[:150]}...')
+                return redirect(url_for('profile'))
 
     import datetime as dt
     seven_days_ago = dt.datetime.utcnow() - dt.timedelta(days=7)
