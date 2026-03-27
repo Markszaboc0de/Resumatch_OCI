@@ -43,6 +43,9 @@ nlp_model = SentenceTransformer("BAAI/bge-m3")
 ner_model = GLiNER.from_pretrained("urchade/gliner_medium-v2.1")
 print("Models Loaded.")
 
+# Global state to track active calculations per user
+active_calculations = set()
+
 # --- MODELS ---
 
 class Users(UserMixin, db.Model):
@@ -1028,21 +1031,34 @@ def login():
             # Just-In-Time (JIT) Match Calculation
             try:
                 cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
-                if os.path.exists(cache_path):
+                needs_recalc = False
+                if not os.path.exists(cache_path):
+                    needs_recalc = True
+                else:
                     cache_mtime = os.path.getmtime(cache_path)
                     cache_time = datetime.utcfromtimestamp(cache_mtime)
-                    
-                    # If this user hasn't calculated matches since the newest jobs arrived
                     if not user.last_active_date or user.last_active_date < cache_time:
-                        print(f"JIT Matching trigger: Cache updated {cache_time}. Re-evaluating CVs for User {user.user_id}")
-                        user_cvs = CVs.query.filter_by(user_id=user.user_id).all()
-                        for cv in user_cvs:
-                            if cv.parsed_tokens:
-                                vec = json.loads(cv.parsed_tokens)
-                                thread = threading.Thread(target=calculate_matches_background, args=(cv.cv_id, vec))
-                                thread.start()
+                        needs_recalc = True
+                        
+                if needs_recalc:
+                    print(f"JIT Matching trigger: Re-evaluating CVs for User {user.user_id}")
+                    active_calculations.add(user.user_id)
+                    user_cvs = CVs.query.filter_by(user_id=user.user_id).all()
+                    
+                    def run_jit(u_id, cvs):
+                        try:
+                            for cv in cvs:
+                                if cv.parsed_tokens:
+                                    vec = json.loads(cv.parsed_tokens)
+                                    calculate_matches_background(cv.cv_id, vec)
+                        finally:
+                            active_calculations.discard(u_id)
+                    
+                    thread = threading.Thread(target=run_jit, args=(user.user_id, user_cvs))
+                    thread.start()
             except Exception as e:
                 print(f"JIT matching evaluation failed: {e}")
+                active_calculations.discard(user.user_id)
                 
             # Update last active timestamp so it doesn't infinite loop on next refresh
             user.last_active_date = datetime.utcnow()
@@ -1263,7 +1279,14 @@ def profile():
                 db.session.commit()
 
                 # 5. Trigger Background Match Calculation
-                thread = threading.Thread(target=calculate_matches_background, args=(new_cv.cv_id, cv_embedding.tolist()))
+                active_calculations.add(current_user.user_id)
+                def run_upload_jit(u_id, c_id, vec):
+                    try:
+                        calculate_matches_background(c_id, vec)
+                    finally:
+                        active_calculations.discard(u_id)
+                        
+                thread = threading.Thread(target=run_upload_jit, args=(current_user.user_id, new_cv.cv_id, cv_embedding.tolist()))
                 thread.start()
                 
                 flash('Resume uploaded successfully! Job matching started in background.')
@@ -1501,6 +1524,12 @@ def supersearch():
         'matches': matches_response,
         'remaining': remaining
     })
+
+@app.route('/api/match_status')
+@login_required
+def match_status():
+    is_calculating = current_user.user_id in active_calculations
+    return jsonify({'is_calculating': is_calculating})
 
 # Initialize DB
 with app.app_context():

@@ -412,8 +412,15 @@
                         style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 1px solid #e2e8f0;">
                         <h4 class="mb-3 text-dark fw-bold">Ready to find your match?</h4>
                         <p class="text-muted mb-4">Let our AI match your main resume to the best opportunities.</p>
-                        <a href="{{ url_for('dream_job') }}"
-                            class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5">✨ Find My Dream Job</a>
+                        <div id="dreamJobContainer">
+                            <a href="{{ url_for('dream_job') }}"
+                                id="btnDreamJob"
+                                class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5">✨ Find My Dream Job</a>
+                            <button id="btnDreamJobLoading" class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5 d-none" disabled>
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Matching in progress...
+                            </button>
+                        </div>
                     </div>
                     {% else %}
                     <div class="text-center py-5">
@@ -522,6 +529,31 @@
                 btn.disabled = false;
                 loading.classList.add('d-none');
             }
+        });
+    </script>
+    <script>
+        function checkMatchStatus() {
+            fetch('/api/match_status')
+                .then(r => r.json())
+                .then(data => {
+                    const btn = document.getElementById('btnDreamJob');
+                    const loader = document.getElementById('btnDreamJobLoading');
+                    if (btn && loader) {
+                        if (data.is_calculating) {
+                            btn.classList.add('d-none');
+                            loader.classList.remove('d-none');
+                            setTimeout(checkMatchStatus, 2000);
+                        } else {
+                            btn.classList.remove('d-none');
+                            loader.classList.add('d-none');
+                        }
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkMatchStatus();
         });
     </script>
 </body>
