@@ -277,6 +277,51 @@ def load_cached_embeddings():
         print(f"Failed to load cached embeddings: {e}")
     return None, None
 
+def ensure_jit_matches(user):
+    """
+    Checks if the cache has been updated since the user was last active,
+    or if the cache is missing. If so, triggers background recalculation.
+    """
+    try:
+        if user.user_id in active_calculations:
+            return
+            
+        cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+        needs_recalc = False
+        
+        if not os.path.exists(cache_path):
+            needs_recalc = True
+        else:
+            cache_mtime = os.path.getmtime(cache_path)
+            cache_time = datetime.utcfromtimestamp(cache_mtime)
+            if not user.last_active_date or user.last_active_date < cache_time:
+                needs_recalc = True
+                
+        if needs_recalc:
+            print(f"JIT Matching trigger: Re-evaluating CVs for User {user.user_id}")
+            active_calculations.add(user.user_id)
+            user_cvs = CVs.query.filter_by(user_id=user.user_id).all()
+            user_id_val = user.user_id
+            
+            def run_jit(u_id, cvs):
+                try:
+                    for cv in cvs:
+                        if cv.parsed_tokens:
+                            vec = json.loads(cv.parsed_tokens)
+                            calculate_matches_background(cv.cv_id, vec)
+                finally:
+                    active_calculations.discard(u_id)
+            
+            thread = threading.Thread(target=run_jit, args=(user_id_val, user_cvs))
+            thread.start()
+            
+            # Prevent infinite recalculation loop by immediately updating last_active_date
+            user.last_active_date = datetime.utcnow()
+            db.session.commit()
+    except Exception as e:
+        print(f"JIT matching evaluation failed: {e}")
+        active_calculations.discard(user.user_id)
+
 def calculate_matches_background(cv_id, cv_embedding_list):
     with app.app_context():
         import torch
@@ -1029,38 +1074,10 @@ def login():
             login_user(user)
             
             # Just-In-Time (JIT) Match Calculation
-            try:
-                cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
-                needs_recalc = False
-                if not os.path.exists(cache_path):
-                    needs_recalc = True
-                else:
-                    cache_mtime = os.path.getmtime(cache_path)
-                    cache_time = datetime.utcfromtimestamp(cache_mtime)
-                    if not user.last_active_date or user.last_active_date < cache_time:
-                        needs_recalc = True
-                        
-                if needs_recalc:
-                    print(f"JIT Matching trigger: Re-evaluating CVs for User {user.user_id}")
-                    active_calculations.add(user.user_id)
-                    user_cvs = CVs.query.filter_by(user_id=user.user_id).all()
-                    
-                    def run_jit(u_id, cvs):
-                        try:
-                            for cv in cvs:
-                                if cv.parsed_tokens:
-                                    vec = json.loads(cv.parsed_tokens)
-                                    calculate_matches_background(cv.cv_id, vec)
-                        finally:
-                            active_calculations.discard(u_id)
-                    
-                    thread = threading.Thread(target=run_jit, args=(user.user_id, user_cvs))
-                    thread.start()
-            except Exception as e:
-                print(f"JIT matching evaluation failed: {e}")
-                active_calculations.discard(user.user_id)
+            ensure_jit_matches(user)
                 
             # Update last active timestamp so it doesn't infinite loop on next refresh
+            # and prevents profile from expiring
             user.last_active_date = datetime.utcnow()
             db.session.commit()
             
@@ -1080,6 +1097,8 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    ensure_jit_matches(current_user)
+
     # Show job board (listings)
     page = request.args.get('page', 1, type=int)
     per_page = 20
@@ -1203,6 +1222,8 @@ def employer():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    ensure_jit_matches(current_user)
+    
     user_cvs = CVs.query.filter_by(user_id=current_user.user_id).order_by(CVs.upload_date.desc()).all()
 
     if request.method == 'POST':
@@ -1358,6 +1379,8 @@ def set_main_cv(cv_id):
 @app.route('/dream_job')
 @login_required
 def dream_job():
+    ensure_jit_matches(current_user)
+
     if not check_and_deduct_match(current_user):
         flash("You have reached your matching limit for this month.")
         return redirect(url_for('profile'))
