@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumatch - Survey Board</title>
-    <meta name="description" content="Community surveys shared by Resumatch users. Help fellow job seekers and researchers by completing quick surveys.">
+    <meta name="description"
+        content="Community surveys shared by Resumatch users. Help fellow job seekers and researchers by completing quick surveys.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -35,7 +36,7 @@
             right: -20%;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -46,7 +47,7 @@
             left: -10%;
             width: 400px;
             height: 400px;
-            background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -156,12 +157,29 @@
             flex-shrink: 0;
         }
 
-        .accent-0 { background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); }
-        .accent-1 { background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%); }
-        .accent-2 { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); }
-        .accent-3 { background: linear-gradient(180deg, #43e97b 0%, #38f9d7 100%); }
-        .accent-4 { background: linear-gradient(180deg, #fa709a 0%, #fee140 100%); }
-        .accent-5 { background: linear-gradient(180deg, #a18cd1 0%, #fbc2eb 100%); }
+        .accent-0 {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .accent-1 {
+            background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .accent-2 {
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .accent-3 {
+            background: linear-gradient(180deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .accent-4 {
+            background: linear-gradient(180deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .accent-5 {
+            background: linear-gradient(180deg, #a18cd1 0%, #fbc2eb 100%);
+        }
 
         .survey-body {
             flex: 1;
@@ -362,7 +380,8 @@
                 <i class="bi bi-clipboard2-data"></i>
             </div>
             <h1 class="hero-title">Survey Board</h1>
-            <p class="hero-subtitle">Community surveys shared by Resumatch users. Help others with their research by taking a quick survey.</p>
+            <p class="hero-subtitle">Community surveys shared by Resumatch users. Help others with their research by
+                taking a quick survey.</p>
             <div class="hero-stats">
                 <div class="hero-stat">
                     <div class="hero-stat-value">{{ surveys | length }}</div>
@@ -371,9 +390,10 @@
                 <div class="hero-stat">
                     <div class="hero-stat-value">
                         {% if surveys %}
-                            {{ ((surveys | map(attribute='estimated_minutes') | sum) / (surveys | length)) | round(0) | int }}
+                        {{ ((surveys | map(attribute='estimated_minutes') | sum) / (surveys | length)) | round(0) | int
+                        }}
                         {% else %}
-                            0
+                        0
                         {% endif %}
                     </div>
                     <div class="hero-stat-label">Avg. Minutes</div>
@@ -409,7 +429,8 @@
                         </div>
                     </div>
                     <div class="survey-action">
-                        <a href="{{ survey.survey_url if survey.survey_url.startswith('http') else 'https://' + survey.survey_url }}" target="_blank" class="btn-take-survey">
+                        <a href="{{ survey.survey_url if survey.survey_url.startswith('http') else 'https://' + survey.survey_url }}"
+                            target="_blank" class="btn-take-survey">
                             Take Survey <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
