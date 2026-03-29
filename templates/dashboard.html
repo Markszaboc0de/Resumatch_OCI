@@ -181,6 +181,7 @@
             transition: box-shadow 0.2s, transform 0.2s;
             gap: 24px;
             align-items: flex-start;
+            position: relative;
         }
 
         .job-card:hover {
@@ -437,10 +438,10 @@
                         <div class="job-action text-end">
                             {% if job.is_native %}
                             <a href="{{ url_for('job_detail', jd_id=job.jd_id) }}" target="_blank"
-                                class="btn-visit">View Job</a>
+                                class="btn-visit stretched-link">View Job</a>
                             {% elif job.url %}
                             <a href="{{ job.url if job.url.startswith('http') else 'http://' + job.url }}"
-                                target="_blank" class="btn-visit">Visit</a>
+                                target="_blank" class="btn-visit stretched-link">Visit</a>
                             {% else %}
                             <span class="btn-visit" style="opacity: 0.5; pointer-events: none;">No Link</span>
                             {% endif %}
