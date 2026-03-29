@@ -454,6 +454,63 @@
                     <!-- Results dynamically inserted here -->
                 </div>
             </div>
+
+            <div class="form-card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3"
+                    style="border-bottom: 1px solid #edf2f7;">
+                    <h3 class="form-card-header mb-0" style="border-bottom: none; padding-bottom: 0;">
+                        <i class="bi bi-clipboard2-data me-2"></i>My Survey
+                    </h3>
+                    {% if user_survey %}
+                    <span class="badge bg-success">Published</span>
+                    {% else %}
+                    <span class="badge bg-secondary">No survey</span>
+                    {% endif %}
+                </div>
+                <p class="text-muted small mb-3">Share a survey link with the community. You can publish one survey at a time — it will appear on the Survey Board.</p>
+
+                <form method="POST" action="{{ url_for('save_survey') }}">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label text-muted fw-semibold small">Survey Name</label>
+                            <input type="text" class="form-control custom-input" name="survey_name"
+                                placeholder="e.g. Career Satisfaction Survey" maxlength="255"
+                                value="{{ user_survey.survey_name if user_survey else '' }}" required>
+                        </div>
+                        <div class="col-md-4 mt-3 mt-md-0">
+                            <label class="form-label text-muted fw-semibold small">Est. Time (minutes)</label>
+                            <input type="number" class="form-control custom-input" name="estimated_minutes"
+                                placeholder="5" min="1" max="120"
+                                value="{{ user_survey.estimated_minutes if user_survey else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold small">Survey Link</label>
+                        <input type="url" class="form-control custom-input" name="survey_url"
+                            placeholder="https://forms.google.com/..." 
+                            value="{{ user_survey.survey_url if user_survey else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold small">Short Description</label>
+                        <textarea class="form-control custom-input" name="survey_description" rows="2"
+                            maxlength="500"
+                            placeholder="Briefly describe what your survey is about...">{{ user_survey.survey_description if user_survey else '' }}</textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-custom">
+                            {% if user_survey %}Update Survey{% else %}Publish Survey{% endif %}
+                        </button>
+                        {% if user_survey %}
+                        <button type="button" class="btn btn-outline-danger btn-custom" onclick="document.getElementById('deleteSurveyForm').submit();">
+                            <i class="bi bi-trash me-1"></i>Remove
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+                {% if user_survey %}
+                <form id="deleteSurveyForm" method="POST" action="{{ url_for('delete_survey') }}" class="d-none"></form>
+                {% endif %}
+            </div>
         </main>
     </div>
 

@@ -142,6 +142,18 @@ class Admins(db.Model):
     username = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
 
+class Surveys(db.Model):
+    __tablename__ = 'surveys'
+    survey_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), unique=True, nullable=False)
+    survey_name = db.Column(db.String(255), nullable=False)
+    survey_description = db.Column(db.String(500), nullable=False)
+    survey_url = db.Column(db.Text, nullable=False)
+    estimated_minutes = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('Users', backref=db.backref('survey', uselist=False, lazy=True))
+
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
@@ -1325,7 +1337,9 @@ def profile():
     if current_user.last_active_date and current_user.last_active_date < seven_days_ago:
         is_expired = True
 
-    return render_template('profile.html', user=current_user, cvs=user_cvs, is_expired=is_expired)
+    user_survey = Surveys.query.filter_by(user_id=current_user.user_id).first()
+
+    return render_template('profile.html', user=current_user, cvs=user_cvs, is_expired=is_expired, user_survey=user_survey)
 
 @app.route('/delete_cv/<int:cv_id>', methods=['POST'])
 @login_required
@@ -1553,6 +1567,67 @@ def supersearch():
 def match_status():
     is_calculating = current_user.user_id in active_calculations
     return jsonify({'is_calculating': is_calculating})
+
+# --- SURVEY ROUTES ---
+@app.route('/survey')
+def survey_board():
+    surveys = Surveys.query.order_by(Surveys.created_at.desc()).all()
+    return render_template('survey.html', surveys=surveys)
+
+@app.route('/profile/survey', methods=['POST'])
+@login_required
+def save_survey():
+    survey_name = request.form.get('survey_name', '').strip()
+    survey_description = request.form.get('survey_description', '').strip()
+    survey_url = request.form.get('survey_url', '').strip()
+    estimated_minutes = request.form.get('estimated_minutes', '').strip()
+
+    if not survey_name or not survey_description or not survey_url or not estimated_minutes:
+        flash('All survey fields are required.')
+        return redirect(url_for('profile'))
+
+    # Ensure URL has protocol
+    if not survey_url.startswith(('http://', 'https://')):
+        survey_url = 'https://' + survey_url
+
+    try:
+        minutes = int(estimated_minutes)
+        if minutes < 1 or minutes > 120:
+            flash('Estimated time must be between 1 and 120 minutes.')
+            return redirect(url_for('profile'))
+    except ValueError:
+        flash('Estimated time must be a number.')
+        return redirect(url_for('profile'))
+
+    existing = Surveys.query.filter_by(user_id=current_user.user_id).first()
+    if existing:
+        existing.survey_name = survey_name
+        existing.survey_description = survey_description
+        existing.survey_url = survey_url
+        existing.estimated_minutes = minutes
+    else:
+        new_survey = Surveys(
+            user_id=current_user.user_id,
+            survey_name=survey_name,
+            survey_description=survey_description,
+            survey_url=survey_url,
+            estimated_minutes=minutes
+        )
+        db.session.add(new_survey)
+
+    db.session.commit()
+    flash('Survey saved successfully!')
+    return redirect(url_for('profile'))
+
+@app.route('/profile/survey/delete', methods=['POST'])
+@login_required
+def delete_survey():
+    survey = Surveys.query.filter_by(user_id=current_user.user_id).first()
+    if survey:
+        db.session.delete(survey)
+        db.session.commit()
+        flash('Survey removed.')
+    return redirect(url_for('profile'))
 
 # Initialize DB
 with app.app_context():

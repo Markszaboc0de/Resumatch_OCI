@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumatch - Survey Board</title>
+    <meta name="description" content="Community surveys shared by Resumatch users. Help fellow job seekers and researchers by completing quick surveys.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Hero Header */
+        .hero-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2b6cb0 50%, #3182ce 100%);
+            padding: 60px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 0 24px;
+        }
+
+        .hero-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hero-icon i {
+            font-size: 2rem;
+            color: #fff;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 400;
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 32px;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .hero-stat-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .content-area {
+            max-width: 960px;
+            margin: -40px auto 60px;
+            padding: 0 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Survey Cards */
+        .survey-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 0;
+            margin-bottom: 16px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .survey-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            transform: translateY(-3px);
+            border-color: #cbd5e0;
+        }
+
+        .survey-card-inner {
+            display: flex;
+            align-items: stretch;
+        }
+
+        .survey-accent {
+            width: 5px;
+            flex-shrink: 0;
+        }
+
+        .accent-0 { background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); }
+        .accent-1 { background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%); }
+        .accent-2 { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); }
+        .accent-3 { background: linear-gradient(180deg, #43e97b 0%, #38f9d7 100%); }
+        .accent-4 { background: linear-gradient(180deg, #fa709a 0%, #fee140 100%); }
+        .accent-5 { background: linear-gradient(180deg, #a18cd1 0%, #fbc2eb 100%); }
+
+        .survey-body {
+            flex: 1;
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .survey-info {
+            flex: 1;
+        }
+
+        .survey-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin: 0 0 6px;
+        }
+
+        .survey-description {
+            font-size: 0.9rem;
+            color: #718096;
+            margin: 0 0 10px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .survey-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .survey-meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #a0aec0;
+            font-weight: 500;
+        }
+
+        .survey-meta-item i {
+            font-size: 0.85rem;
+        }
+
+        .survey-action {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .btn-take-survey {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-take-survey:hover {
+            background: linear-gradient(135deg, #2c5282 0%, #2b6cb0 100%);
+            color: #fff;
+            transform: scale(1.03);
+        }
+
+        .btn-take-survey i {
+            font-size: 1rem;
+        }
+
+        /* Time Badge */
+        .time-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #edf2f7;
+            color: #4a5568;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .time-badge i {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .empty-state-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: #f7fafc;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-icon i {
+            font-size: 2.5rem;
+            color: #cbd5e0;
+        }
+
+        .empty-state h4 {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: #a0aec0;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            z-index: 2;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 1.75rem;
+            }
+
+            .hero-stats {
+                gap: 24px;
+            }
+
+            .survey-body {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .survey-action {
+                width: 100%;
+            }
+
+            .btn-take-survey {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .content-area {
+                padding: 0 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Hero Header -->
+    <header class="hero-header">
+        <a href="/" class="back-link">
+            <i class="bi bi-arrow-left"></i> Back to Resumatch
+        </a>
+        <div class="hero-content">
+            <div class="hero-icon">
+                <i class="bi bi-clipboard2-data"></i>
+            </div>
+            <h1 class="hero-title">Survey Board</h1>
+            <p class="hero-subtitle">Community surveys shared by Resumatch users. Help others with their research by taking a quick survey.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value">{{ surveys | length }}</div>
+                    <div class="hero-stat-label">Surveys</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">
+                        {% if surveys %}
+                            {{ (surveys | map(attribute='estimated_minutes') | sum / surveys | length) | round(0) | int }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <div class="hero-stat-label">Avg. Minutes</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Survey Cards -->
+    <main class="content-area">
+        {% if surveys %}
+        {% for survey in surveys %}
+        <div class="survey-card">
+            <div class="survey-card-inner">
+                <div class="survey-accent accent-{{ loop.index0 % 6 }}"></div>
+                <div class="survey-body">
+                    <div class="survey-info">
+                        <h3 class="survey-name">{{ survey.survey_name }}</h3>
+                        <p class="survey-description">{{ survey.survey_description }}</p>
+                        <div class="survey-meta">
+                            <span class="time-badge">
+                                <i class="bi bi-clock"></i>
+                                {{ survey.estimated_minutes }} min
+                            </span>
+                            <span class="survey-meta-item">
+                                <i class="bi bi-person"></i>
+                                {{ survey.user.username }}
+                            </span>
+                            <span class="survey-meta-item">
+                                <i class="bi bi-calendar3"></i>
+                                {{ survey.created_at.strftime('%b %d, %Y') }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="survey-action">
+                        <a href="{{ survey.survey_url }}" target="_blank" class="btn-take-survey">
+                            Take Survey <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-clipboard2"></i>
+            </div>
+            <h4>No surveys yet</h4>
+            <p>Be the first to share a survey! Log in and add one from your profile page.</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
