@@ -199,6 +199,11 @@
                         <i class="bi bi-map-fill"></i> Map View
                     </a>
                 </li>
+                <li>
+                    <a href="{{ url_for('survey_board') }}">
+                        <i class="bi bi-clipboard2-data"></i> Surveys
+                    </a>
+                </li>
 
                 {% if current_user.is_authenticated %}
                 <li>
