@@ -371,7 +371,7 @@
                 <div class="hero-stat">
                     <div class="hero-stat-value">
                         {% if surveys %}
-                            {{ (surveys | map(attribute='estimated_minutes') | sum / surveys | length) | round(0) | int }}
+                            {{ ((surveys | map(attribute='estimated_minutes') | sum) / (surveys | length)) | round(0) | int }}
                         {% else %}
                             0
                         {% endif %}
@@ -409,7 +409,7 @@
                         </div>
                     </div>
                     <div class="survey-action">
-                        <a href="{{ survey.survey_url }}" target="_blank" class="btn-take-survey">
+                        <a href="{{ survey.survey_url if survey.survey_url.startswith('http') else 'https://' + survey.survey_url }}" target="_blank" class="btn-take-survey">
                             Take Survey <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
