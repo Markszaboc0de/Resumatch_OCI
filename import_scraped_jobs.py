@@ -22,6 +22,7 @@ def sync_scraped_jobs():
                        country ~* '\\y(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\y'
                     OR raw_text ~* '\\y(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\y'
                 )
+                AND title !~* '\\y(director|senior|sr.|expert|president|associate|oktató|lead|clinical|head )\\y'
             """
             result = db.session.execute(text(sql_query))
             rows = result.fetchall()
