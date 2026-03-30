@@ -94,6 +94,12 @@ def sync_scraped_jobs():
         db.session.execute(text("DELETE FROM scraped_jobs"))
         db.session.commit()
         
+        # 3. IMMEDIATELY invalidate cache so users see the loading state
+        import os
+        cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')
+        if os.path.exists(cache_path):
+            os.remove(cache_path)
+        
         print(f"Sweep complete. Deleted {deleted_count} stale external jobs.")
         print("Cleaned up scraped_jobs staging table.")
         
