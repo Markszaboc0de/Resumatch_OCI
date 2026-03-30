@@ -206,6 +206,15 @@
                     <p class="lead text-muted">We matched your main resume with these incredible opportunities.</p>
                 </div>
 
+                <div id="recalcBanner" class="alert alert-info shadow-sm d-none text-center mb-4 border-info">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <span class="spinner-border spinner-border-sm me-3 text-info" role="status" aria-hidden="true"></span>
+                        <div>
+                            <strong>Updating Matches!</strong> We are currently recalculating your AI matches with the latest jobs. This page will refresh automatically when ready.
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row justify-content-center">
                     {% for job in matches %}
                     <div class="col-md-4 mb-4">
@@ -250,7 +259,7 @@
                 </div>
 
                 {% if not matches %}
-                <div class="text-center mt-5">
+                <div class="text-center mt-5" id="noMatchesWarning">
                     <div class="alert alert-warning d-inline-block shadow-sm">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i> No strong matches found yet. Try uploading
                         a more detailed resume or check back later!
@@ -268,6 +277,36 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
+        // JS Logic for Checking recalc status
+        let wasCalculating = false;
+        function checkMatchStatus() {
+            fetch('/api/match_status')
+                .then(r => r.json())
+                .then(data => {
+                    const banner = document.getElementById('recalcBanner');
+                    const noMatchesWarning = document.getElementById('noMatchesWarning');
+                    if (data.is_calculating) {
+                        wasCalculating = true;
+                        if (banner) banner.classList.remove('d-none');
+                        if (noMatchesWarning) noMatchesWarning.classList.add('d-none');
+                        setTimeout(checkMatchStatus, 2000);
+                    } else {
+                        if (wasCalculating) {
+                            // Calculation just finished in background, refresh the dream jobs page!
+                            window.location.reload();
+                        } else {
+                            if (banner) banner.classList.add('d-none');
+                            if (noMatchesWarning) noMatchesWarning.classList.remove('d-none');
+                        }
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkMatchStatus();
+        });
+
         // Trigger confetti if there are matches
         const hasMatches = "{{ 'true' if matches else 'false' }}" === "true";
         if (hasMatches) {

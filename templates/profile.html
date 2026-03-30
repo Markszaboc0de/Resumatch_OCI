@@ -420,12 +420,7 @@
                         <div id="dreamJobContainer">
                             <a href="{{ url_for('dream_job') }}"
                                 id="btnDreamJob"
-                                class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5">✨ Find My Dream Job</a>
-                            <button id="btnDreamJobLoading" class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5 d-none" disabled>
-                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                Matching in progress...
-                            </button>
-                        </div>
+                                class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5" style="transition: all 0.3s ease;">✨ Find My Dream Job</a>
                     </div>
                     {% else %}
                     <div class="text-center py-5">
@@ -599,15 +594,16 @@
                 .then(r => r.json())
                 .then(data => {
                     const btn = document.getElementById('btnDreamJob');
-                    const loader = document.getElementById('btnDreamJobLoading');
-                    if (btn && loader) {
+                    if (btn) {
                         if (data.is_calculating) {
-                            btn.classList.add('d-none');
-                            loader.classList.remove('d-none');
+                            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Updating Matches...`;
+                            btn.classList.replace('btn-warning', 'btn-info');
+                            btn.classList.replace('text-dark', 'text-white');
                             setTimeout(checkMatchStatus, 2000);
                         } else {
-                            btn.classList.remove('d-none');
-                            loader.classList.add('d-none');
+                            btn.innerHTML = `✨ Find My Dream Job`;
+                            btn.classList.replace('btn-info', 'btn-warning');
+                            btn.classList.replace('text-white', 'text-dark');
                         }
                     }
                 })
