@@ -768,21 +768,28 @@ def employer_match_candidate(job_id):
         flash('No visible candidates found matching the criteria.')
         return redirect(url_for('employer_dashboard'))
         
+    expected_dim = job_embedding.shape[-1]
+    
     import torch
     valid_cvs = []
     cv_embeddings_list = []
     
     for cv in cvs:
+        vec = None
         if cv.parsed_tokens and cv.parsed_tokens.startswith('['):
             try:
-                vec = json.loads(cv.parsed_tokens)
-                cv_embeddings_list.append(vec)
-                valid_cvs.append(cv)
+                parsed_vec = json.loads(cv.parsed_tokens)
+                if len(parsed_vec) == expected_dim:
+                    vec = parsed_vec
             except:
                 pass
-        elif cv.raw_text:
-            vec = nlp_model.encode(clean_text(cv.raw_text), convert_to_tensor=False)
-            cv_embeddings_list.append(vec.tolist())
+                
+        if vec is None and cv.raw_text:
+            vec_tensor = nlp_model.encode(clean_text(cv.raw_text), convert_to_tensor=False)
+            vec = vec_tensor.tolist()
+            
+        if vec is not None:
+            cv_embeddings_list.append(vec)
             valid_cvs.append(cv)
             
     if not valid_cvs:
@@ -1430,7 +1437,14 @@ def dream_job():
             "country": job.country
         })
 
-    return render_template('dream_jobs.html', matches=matches)
+    # Check if there are newly scraped jobs waiting for AI embeddings
+    processing_jobs = db.session.query(Job_Descriptions.jd_id).filter(
+        Job_Descriptions.active_status == True, 
+        Job_Descriptions.parsed_tokens == None
+    ).first()
+    better_matches_incoming = processing_jobs is not None
+
+    return render_template('dream_jobs.html', matches=matches, better_matches_incoming=better_matches_incoming)
 
 
 @app.route('/matches/<int:cv_id>')
@@ -1521,9 +1535,23 @@ def supersearch():
         return jsonify({'matches': [], 'remaining': 'Infinite' if current_user.supersearch_limit is None else current_user.supersearch_limit - current_user.supersearch_used_this_month})
 
     if job_embeddings is None:
-        job_texts = [clean_text(job.raw_text) for job in active_jobs]
-        job_ids = [job.jd_id for job in active_jobs]
-        job_embeddings = nlp_model.encode(job_texts, convert_to_tensor=True)
+        job_embeddings_list = []
+        job_ids = []
+        for job in active_jobs:
+            if job.parsed_tokens and job.parsed_tokens.startswith('['):
+                try:
+                    import json
+                    job_embeddings_list.append(json.loads(job.parsed_tokens))
+                    job_ids.append(job.jd_id)
+                except:
+                    pass
+        
+        if not job_embeddings_list:
+            remaining = 'Infinite' if current_user.supersearch_limit is None else current_user.supersearch_limit - current_user.supersearch_used_this_month
+            return jsonify({'matches': [], 'remaining': remaining}), 200
+            
+        import torch
+        job_embeddings = torch.tensor(job_embeddings_list)
         
         try:
             cache_path = os.path.join(app.config['UPLOAD_FOLDER'], 'job_embeddings.pt')

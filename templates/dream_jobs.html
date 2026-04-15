@@ -202,8 +202,18 @@
         <main class="content-area">
             <div class="container-fluid max-w-6xl mx-auto">
                 <div class="text-center mb-5 mt-4">
-                    <h1 class="display-5 fw-bold text-dark" style="letter-spacing: -1px;">Your Top 3 Dream Jobs</h1>
-                    <p class="lead text-muted">We matched your main resume with these incredible opportunities.</p>
+                    <h1 class="display-5 fw-bold text-dark" style="letter-spacing: -1px;">
+                        Your Top 3 Dream Jobs
+                        {% if better_matches_incoming %}
+                        <span class="badge bg-warning text-dark align-middle ms-2" style="font-size: 0.35em; vertical-align: middle;">⏳ New Jobs incoming</span>
+                        {% endif %}
+                    </h1>
+                    <p class="lead text-muted">
+                        We matched your main resume with these incredible opportunities.
+                        {% if better_matches_incoming %}
+                        <br><small class="text-primary fw-semibold"><i class="bi bi-info-circle me-1"></i>Our AI is currently analyzing thousands of new scraped jobs in the background. Check back soon for even better results!</small>
+                        {% endif %}
+                    </p>
                 </div>
 
                 <div id="recalcBanner" class="alert alert-info shadow-sm d-none text-center mb-4 border-info">
