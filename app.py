@@ -686,6 +686,49 @@ def create_job():
         
     return redirect(url_for('employer_dashboard'))
 
+@app.route('/employer/edit_job/<int:job_id>', methods=['POST'])
+def edit_job(job_id):
+    employer_id = session.get('employer_id')
+    if not employer_id:
+        return redirect(url_for('employer_login'))
+        
+    job = Job_Descriptions.query.get_or_404(job_id)
+    if job.employer_id != employer_id:
+        flash('Unauthorized.')
+        return redirect(url_for('employer_dashboard'))
+        
+    job.title = request.form.get('title')
+    job.city = request.form.get('city')
+    job.country = request.form.get('country')
+    
+    description = request.form.get('description')
+    
+    # NLP Processing
+    if description and description != job.raw_text:
+        job.raw_text = description
+        job.parsed_tokens = clean_text(description)
+        # Clear existing match scores to force recalculation since requirements changed
+        Precalc_Scores.query.filter_by(jd_id=job.jd_id).delete()
+    
+    apply_method = request.form.get('apply_method', 'redirect')
+    job.is_native = (apply_method == 'native')
+    
+    url = request.form.get('url')
+    if url and not job.is_native and not url.startswith(('http://', 'https://')):
+        url = 'http://' + url
+    elif job.is_native:
+        url = None
+    job.url = url
+    
+    try:
+        db.session.commit()
+        flash('Job updated successfully!')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating job: {e}')
+        
+    return redirect(url_for('employer_dashboard'))
+
 @app.route('/employer/toggle_status/<int:job_id>')
 def toggle_job_status(job_id):
     employer_id = session.get('employer_id')
