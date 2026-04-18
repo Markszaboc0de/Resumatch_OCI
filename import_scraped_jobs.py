@@ -15,14 +15,14 @@ def sync_scraped_jobs():
                 SELECT jd_id, company, title, city, country, raw_text, url 
                 FROM scraped_jobs 
                 WHERE (
-                       title ~* '\\y(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\y'
+                       title ~* '\\y(trainee|intern|internship|apprenticeship|student|graduate|junior|associate|gyakornok|gyakornoki|diák|analyst|képzés|praktikum|program|programme|ösztöndíj|prácticas|pályakezdő|Growww|schnupper|entry level)\\y'
                     OR raw_text ~* '\\y(intern|internship|entry-level|entry level|trainee|junior|graduate|gyakornok|kezdő|pályakezdő|friss diplomás)\\y'
                 )
                 AND (
                        country ~* '\\y(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\y'
                     OR raw_text ~* '\\y(Austria|Belgium|Bulgaria|Croatia|Cyprus|Czechia|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Ireland|Italy|Latvia|Lithuania|Luxembourg|Malta|Netherlands|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|United Kingdom|Switzerland|Norway|Europe)\\y'
                 )
-                AND title !~* '\\y(director|senior|sr.|expert|president|associate|oktató|lead|clinical|head |VP)\\y'
+                AND title !~* '\\y(director|senior|sr.|expert|president|oktató|lead|clinical|head |VP)\\y'
             """
             result = db.session.execute(text(sql_query))
             rows = result.fetchall()
