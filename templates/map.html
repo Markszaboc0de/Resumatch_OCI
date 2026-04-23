@@ -176,6 +176,12 @@
 </head>
 
 <body>
+    <!-- Language Switcher -->
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1050; display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
+        <a href="{{ url_for('set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
+    </div>
+
     <div class="main-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -187,21 +193,21 @@
             <ul class="sidebar-nav">
                 <li>
                     <span class="px-3 text-muted"
-                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">Navigation</span>
+                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">{{ _('Navigation') }}</span>
                 </li>
                 <li class="mt-2">
                     <a href="{{ url_for('dashboard' if current_user.is_authenticated else 'listings') }}">
-                        <i class="bi bi-grid-fill"></i> Job Board
+                        <i class="bi bi-grid-fill"></i> {{ _('Job Board') }}
                     </a>
                 </li>
                 <li>
                     <a href="{{ url_for('job_map') }}" class="active">
-                        <i class="bi bi-map-fill"></i> Map View
+                        <i class="bi bi-map-fill"></i> {{ _('Map View') }}
                     </a>
                 </li>
                 <li>
                     <a href="{{ url_for('survey_board') }}">
-                        <i class="bi bi-clipboard2-data"></i> Surveys
+                        <i class="bi bi-clipboard2-data"></i> {{ _('Surveys') }}
                     </a>
                 </li>
 
@@ -224,17 +230,17 @@
                 {% else %}
                 <li style="margin-top: 2rem;">
                     <a href="{{ url_for('login') }}">
-                        <i class="bi bi-box-arrow-in-right"></i> Log In
+                        <i class="bi bi-box-arrow-in-right"></i> {{ _('Log In') }}
                     </a>
                 </li>
                 <li>
                     <a href="{{ url_for('register') }}">
-                        <i class="bi bi-person-plus-fill"></i> Register
+                        <i class="bi bi-person-plus-fill"></i> {{ _('Register') }}
                     </a>
                 </li>
                 <li style="margin-top: 1rem;">
                     <a href="{{ url_for('employer_login') }}" class="text-muted">
-                        <i class="bi bi-building"></i> Employer Portal
+                        <i class="bi bi-building"></i> {{ _('Employer Portal') }}
                     </a>
                 </li>
                 {% endif %}

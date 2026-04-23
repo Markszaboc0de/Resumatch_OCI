@@ -1,0 +1,52 @@
+# Hungarian translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-04-23 11:27+0200\n"
+"PO-Revision-Date: 2026-04-23 11:27+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: hu\n"
+"Language-Team: hu <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Navigation"
+msgstr "Navigáció"
+
+msgid "Log In"
+msgstr "Bejelentkezés"
+
+msgid "Job Board"
+msgstr "Állásportál"
+
+msgid "Map View"
+msgstr "Térkép nézet"
+
+msgid "Surveys"
+msgstr "Kérdőívek"
+
+msgid "Register"
+msgstr "Regisztráció"
+
+msgid "Employer Portal"
+msgstr "Munkáltatói Portál"
+
+msgid "Welcome to Resumatch"
+msgstr "Üdvözöljük a Resumatch-en"
+
+msgid "The intelligent job matching platform that connects top talent with their dream roles effortlessly."
+msgstr "Az intelligens álláskereső platform, ami könnyedén összeköti a legjobb tehetségeket álmaik munkájával."
+
+msgid "Register as Candidate"
+msgstr "Jelentkezői regisztráció"
+
+msgid "Browse jobs without logging in"
+msgstr "Állások böngészése bejelentkezés nélkül"

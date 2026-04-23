@@ -147,6 +147,12 @@
 </head>
 
 <body>
+    <!-- Language Switcher -->
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1050; display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
+        <a href="{{ url_for('set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
+    </div>
+
     <div class="main-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -158,7 +164,7 @@
             <ul class="sidebar-nav">
                 <li>
                     <span class="px-3 text-muted"
-                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">Navigation</span>
+                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">{{ _('Navigation') }}</span>
                 </li>
                 <li>
                     <a href="{{ url_for('admin_login') }}" class="active">
@@ -194,7 +200,7 @@
                         <input type="password" class="form-control custom-input" id="password" name="password" required>
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-custom shadow-sm text-white">Log In
+                        <button type="submit" class="btn btn-primary btn-custom shadow-sm text-white"> {{ _('Log In') }}
                             System</button>
                     </div>
                 </form>

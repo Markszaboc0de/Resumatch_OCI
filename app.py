@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, session
+from flask_babel import Babel, _
 import os
 import threading
 from werkzeug.utils import secure_filename
@@ -36,6 +37,22 @@ login_manager.login_view = 'login'
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Babel Configuration
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+
+def get_locale():
+    return session.get('lang', 'en')
+
+babel = Babel(app, locale_selector=get_locale)
+
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    if lang in ['en', 'hu']:
+        session['lang'] = lang
+    return redirect(request.referrer or url_for('landing'))
+
 
 # Load NLP Model (Global) - Loaded once at startup
 print("Loading NLP & NER Models...")

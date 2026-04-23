@@ -10,4 +10,4 @@ sentence-transformers
 flask-login
 python-dotenv
 gliner
-
+flask-babel
