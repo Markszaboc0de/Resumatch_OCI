@@ -50,3 +50,99 @@ msgstr "Jelentkezői regisztráció"
 
 msgid "Browse jobs without logging in"
 msgstr "Állások böngészése bejelentkezés nélkül"
+
+msgid "Search Role or Description"
+msgstr "Keresés (szerepkör vagy leírás)"
+
+msgid "Country"
+msgstr "Ország"
+
+msgid "Company"
+msgstr "Cég"
+
+msgid "Filter"
+msgstr "Szűrés"
+
+msgid "View Job"
+msgstr "Állás megtekintése"
+
+msgid "Visit"
+msgstr "Látogatás"
+
+msgid "No Link"
+msgstr "Nincs link"
+
+msgid "Job Listings"
+msgstr "Állásajánlatok"
+
+msgid "No jobs found"
+msgstr "Nem található állás"
+
+msgid "Try adjusting your search filters to find more results."
+msgstr "Próbálja módosítani a keresési szűrőket több eredményért."
+
+msgid "Previous"
+msgstr "Előző"
+
+msgid "Next"
+msgstr "Következő"
+
+msgid "Welcome back!"
+msgstr "Üdvözöljük újra!"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Password"
+msgstr "Jelszó"
+
+msgid "Don't have an account?"
+msgstr "Még nincs fiókja?"
+
+msgid "Create your account"
+msgstr "Hozza létre fiókját"
+
+msgid "Email address"
+msgstr "Email cím"
+
+msgid "Username"
+msgstr "Felhasználónév"
+
+msgid "Confirm Password"
+msgstr "Jelszó megerősítése"
+
+msgid "Already have an account?"
+msgstr "Már van fiókja?"
+
+msgid "Candidate Dashboard"
+msgstr "Jelöltek Irányítópultja"
+
+msgid "Find My Dream Job"
+msgstr "Keresd Meg Az Álommunkám"
+
+msgid "Upload new primary CV"
+msgstr "Új elsődleges önéletrajz feltöltése"
+
+msgid "Log Out"
+msgstr "Kijelentkezés"
+
+msgid "Upload PDF/TXT"
+msgstr "PDF/TXT feltöltése"
+
+msgid "Dashboard"
+msgstr "Irányítópult"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Candidate Profile"
+msgstr "Jelölt Profilja"
+
+msgid "Edit Profile"
+msgstr "Profil Szerkesztése"
+
+msgid "Save Changes"
+msgstr "Változtatások Mentése"
+
+msgid "Short Description"
+msgstr "Rövid Leírás"
