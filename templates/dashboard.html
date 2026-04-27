@@ -409,17 +409,17 @@
                     <div class="divider"></div>
                     <div class="search-input-group">
                         <i class="bi bi-geo-alt"></i>
-                        <input type="text" class="search-input" name="country" placeholder="{{ _(\'Country\') }}"
+                        <input type="text" class="search-input" name="country" placeholder="{{ _('Country') }}"
                             value="{{ country_filter }}">
                     </div>
                     <div class="divider"></div>
                     <div class="search-input-group">
                         <i class="bi bi-building"></i>
-                        <input type="text" class="search-input" name="company" placeholder="{{ _(\'Company\') }}"
+                        <input type="text" class="search-input" name="company" placeholder="{{ _('Company') }}"
                             value="{{ company_filter }}">
                     </div>
                 </div>
-                <button type="submit" class="btn-filter">{{ _(\'Filter\') }}</button>
+                <button type="submit" class="btn-filter">{{ _('Filter') }}</button>
             </form>
 
             <!-- Job Cards List -->
@@ -449,12 +449,12 @@
                         <div class="job-action text-end">
                             {% if job.is_native %}
                             <a href="{{ url_for('job_detail', jd_id=job.jd_id) }}" target="_blank"
-                                class="btn-visit stretched-link">{{ _(\'View Job\') }}</a>
+                                class="btn-visit stretched-link">{{ _('View Job') }}</a>
                             {% elif job.url %}
                             <a href="{{ job.url if job.url.startswith('http') else 'http://' + job.url }}"
-                                target="_blank" class="btn-visit stretched-link">{{ _(\'Visit\') }}</a>
+                                target="_blank" class="btn-visit stretched-link">{{ _('Visit') }}</a>
                             {% else %}
-                            <span class="btn-visit" style="opacity: 0.5; pointer-events: none;">{{ _(\'No Link\') }}</span>
+                            <span class="btn-visit" style="opacity: 0.5; pointer-events: none;">{{ _('No Link') }}</span>
                             {% endif %}
                         </div>
 
@@ -467,8 +467,8 @@
                 {% else %}
                 <div class="text-center py-5 text-muted">
                     <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                    <h4>{{ _(\'No jobs found\') }}</h4>
-                    <p>{{ _(\'Try adjusting your search filters to find more results.\') }}</p>
+                    <h4>{{ _('No jobs found') }}</h4>
+                    <p>{{ _('Try adjusting your search filters to find more results.') }}</p>
                 </div>
                 {% endfor %}
             </div>
@@ -480,7 +480,7 @@
                     <li class="page-item {% if page == 1 %}disabled{% endif %}">
                         <a class="page-link"
                             href="{{ url_for('dashboard', page=page-1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}"
-                            tabindex="-1">{{ _(\'Previous\') }}</a>
+                            tabindex="-1">{{ _('Previous') }}</a>
                     </li>
 
                     <li class="page-item disabled">
@@ -489,7 +489,7 @@
 
                     <li class="page-item {% if page == total_pages %}disabled{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('dashboard', page=page+1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}">{{ _(\'Next\') }}</a>
+                            href="{{ url_for('dashboard', page=page+1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}">{{ _('Next') }}</a>
                     </li>
                 </ul>
             </nav>

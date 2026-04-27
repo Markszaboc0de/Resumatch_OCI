@@ -360,7 +360,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-custom">{{ _(\'Save Changes\') }}</button>
+                    <button type="submit" class="btn btn-primary btn-custom">{{ _('Save Changes') }}</button>
                 </form>
             </div>
 
@@ -497,7 +497,7 @@
                             value="{{ user_survey.survey_url if user_survey else '' }}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted fw-semibold small">{{ _(\'Short Description\') }}</label>
+                        <label class="form-label text-muted fw-semibold small">{{ _('Short Description') }}</label>
                         <textarea class="form-control custom-input" name="survey_description" rows="2"
                             maxlength="500"
                             placeholder="Briefly describe what your survey is about...">{{ user_survey.survey_description if user_survey else '' }}</textarea>
@@ -577,7 +577,7 @@
                                     <h5 class="fw-bold text-primary mb-1">${job.title}</h5>
                                     <h6 class="text-muted mb-3">${job.company}</h6>
                                     <p class="text-muted small flex-grow-1">${job.description}</p>
-                                    ${job.url ? `<a href="${job.url}" target="_blank" class="btn btn-outline-primary btn-sm mt-3 w-100">Apply Now</a>` : `<button class="btn btn-outline-secondary btn-sm mt-3 w-100" disabled>{{ _(\'No Link\') }}</button>`}
+                                    ${job.url ? `<a href="${job.url}" target="_blank" class="btn btn-outline-primary btn-sm mt-3 w-100">Apply Now</a>` : `<button class="btn btn-outline-secondary btn-sm mt-3 w-100" disabled>{{ _('No Link') }}</button>`}
                                 </div>
                             </div>
                         `;
