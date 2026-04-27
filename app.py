@@ -1007,7 +1007,10 @@ def admin_dashboard():
     users = Users.query.all()
     employers = Employers.query.all()
     
-    return render_template('admin_dashboard.html', users=users, employers=employers)
+    import datetime as dt
+    seven_days_ago = dt.datetime.utcnow() - dt.timedelta(days=7)
+    
+    return render_template('admin_dashboard.html', users=users, employers=employers, seven_days_ago=seven_days_ago)
 
 @app.route('/admin/edit_user/<int:user_id>', methods=['POST'])
 def admin_edit_user(user_id):

@@ -271,8 +271,10 @@
                                         <td class="fw-semibold">{{ u.username }}</td>
                                         <td>{{ u.email }}</td>
                                         <td>
-                                            {% if u.is_visible %}
+                                            {% if u.is_visible and u.last_active_date and u.last_active_date >= seven_days_ago %}
                                             <span class="badge bg-success">Yes</span>
+                                            {% elif u.is_visible %}
+                                            <span class="badge bg-warning text-dark">Expired</span>
                                             {% else %}
                                             <span class="badge bg-secondary">No</span>
                                             {% endif %}
