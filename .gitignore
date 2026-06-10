@@ -1,0 +1,18 @@
+jobs.csv
+jobs_data.csv
+app_log.txt
+reproduce_upload_error.py
+
+# Secrets / environment
+.env
+.env.*
+
+# Uploaded user files & generated artifacts
+uploads/
+*.pt
+*.db
+
+# Python / OS cruft
+__pycache__/
+*.pyc
+.DS_Store

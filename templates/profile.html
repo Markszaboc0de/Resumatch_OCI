@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Resumatch - My Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #f7f9fc;
+            border-right: 1px solid #edf1f7;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.5rem;
+            color: #2b6cb0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
+            padding: 40px 60px;
+            max-width: 1000px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 32px;
+            letter-spacing: -0.5px;
+        }
+
+        .form-card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            margin-bottom: 24px;
+        }
+
+        .form-card-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .custom-input {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 10px 14px;
+            background-color: #f7fafc;
+            font-size: 0.95rem;
+        }
+
+        .custom-input:focus {
+            background-color: #ffffff;
+            border-color: #cbd5e0;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+        }
+
+        .btn-custom {
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        /* Resume List Items */
+        .resume-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background-color: #ffffff;
+            transition: all 0.2s;
+        }
+
+        .resume-item:hover {
+            border-color: #cbd5e0;
+            background-color: #f7fafc;
+        }
+
+        .resume-icon {
+            font-size: 1.5rem;
+            color: #e53e3e;
+            margin-right: 16px;
+        }
+
+        .resume-details {
+            flex: 1;
+        }
+
+        .resume-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .content-area {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .resume-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .resume-actions {
+                width: 100%;
+                display: flex;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Language Switcher -->
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1050; display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
+        <a href="{{ url_for('set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
+    </div>
+
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+                <i class="bi bi-infinity"></i>
+                Resumatch
+            </a>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <span class="px-3 text-muted"
+                        style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">{{ _('Navigation') }}</span>
+                </li>
+                <li class="mt-2">
+                    <a href="{{ url_for('dashboard') }}">
+                        <i class="bi bi-grid-fill"></i> {{ _('Job Board') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('job_map') }}">
+                        <i class="bi bi-map-fill"></i> {{ _('Map View') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('survey_board') }}">
+                        <i class="bi bi-clipboard2-data"></i> {{ _('Surveys') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('profile') }}" class="active">
+                        <i class="bi bi-person-circle"></i> My Profile
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('profile_tokens') }}">
+                        <i class="bi bi-coin"></i> Token History
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('notifications') }}">
+                        <i class="bi bi-bell-fill"></i> Notifications
+                    </a>
+                </li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('logout') }}" class="text-danger">
+                        <i class="bi bi-box-arrow-left"></i> Log Out
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <h1 class="header-title">Account Settings</h1>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                {{ messages[0] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Token Balance Card -->
+            <div class="form-card mb-4" style="background: linear-gradient(135deg, #f0fff4, #c6f6d5); border-color: #9ae6b4;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1"><i class="bi bi-coin me-2 text-success"></i>Token Balance</h6>
+                        <p class="text-muted small mb-0">Earn tokens by filling surveys. Spend them on extra matches and supersearches.</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="fs-1 fw-bold text-success" id="tokenBalance">{{ current_user.token_balance }}</span>
+                        <div><a href="{{ url_for('profile_tokens') }}" class="small text-muted">View history →</a></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="form-card-header">Personal Information</div>
+                <form method="POST" action="{{ url_for('profile') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold small">Username</label>
+                            <input type="text" class="form-control custom-input" value="{{ current_user.username }}"
+                                disabled>
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            <label class="form-label text-muted fw-semibold small">Email Address</label>
+                            <input type="text" class="form-control custom-input" value="{{ current_user.email }}"
+                                disabled>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-semibold small">Short Bio / Description</label>
+                        <textarea name="short_description" class="form-control custom-input" rows="4"
+                            placeholder="Tell employers a bit about yourself...">{{ current_user.short_description if current_user.short_description else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
+                        <h6 class="fw-bold text-dark mb-3">Monthly Match Quota</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if current_user.match_limit is none %}
+                                <span class="fs-4 fw-bold text-success">Infinite</span>
+                                {% else %}
+                                <span class="fs-4 fw-bold text-primary" id="matchRemaining">{{ current_user.match_limit -
+                                    current_user.matches_used_this_month }}</span> <span class="text-muted">/ <span id="matchLimit">{{
+                                    current_user.match_limit }}</span> matches remaining</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if current_user.match_reset_date %}
+                                <small class="text-muted d-block">Resets on {{
+                                    current_user.match_reset_date.strftime('%Y-%m-%d') }}</small>
+                                {% else %}
+                                <small class="text-muted d-block">Next reset pending initial match</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if current_user.match_limit is not none %}
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-success btn-custom" onclick="spendTokens('match', this)">
+                                <i class="bi bi-plus-circle me-1"></i>Buy 1 match (2 tokens)
+                            </button>
+                            <span class="text-danger small d-none" id="matchBuyError"></span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
+                        <h6 class="fw-bold text-dark mb-3">Monthly Supersearch Quota</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if current_user.supersearch_limit is none %}
+                                <span class="fs-4 fw-bold text-success" id="ssRemainingBadge">Infinite</span>
+                                {% else %}
+                                <span class="fs-4 fw-bold text-primary" id="ssRemainingBadge">{{
+                                    current_user.supersearch_limit - current_user.supersearch_used_this_month }}</span>
+                                <span class="text-muted">/ <span id="ssLimit">{{ current_user.supersearch_limit }}</span> matches remaining</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if current_user.supersearch_reset_date %}
+                                <small class="text-muted d-block">Resets on {{
+                                    current_user.supersearch_reset_date.strftime('%Y-%m-%d') }}</small>
+                                {% else %}
+                                <small class="text-muted d-block">Next reset pending initial match</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if current_user.supersearch_limit is not none %}
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-success btn-custom" onclick="spendTokens('supersearch', this)">
+                                <i class="bi bi-plus-circle me-1"></i>Buy 1 supersearch (3 tokens)
+                            </button>
+                            <span class="text-danger small d-none" id="ssBuyError"></span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4 p-3 rounded" style="background-color: #f8fafc; border: 1px solid #edf2f7;">
+                        <div class="form-check form-switch d-flex align-items-center justify-content-between gap-3 m-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <input class="form-check-input ms-0" type="checkbox" role="switch" id="visibilitySwitch"
+                                    name="is_visible" style="width: 2.5em; height: 1.25em;" {{ 'checked' if
+                                    current_user.is_visible else '' }}>
+                                <div>
+                                    <label class="form-check-label fw-bold text-dark m-0" for="visibilitySwitch"
+                                        style="font-size: 1rem;">Profile Active (Visible to Employers)</label>
+                                    <div class="form-text mt-1">If disabled, you will not appear in employer search
+                                        results
+                                        or matches.</div>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                {% if is_expired %}
+                                <span class="badge bg-danger mb-2">Expired</span>
+                                <small class="text-danger d-block">Your profile is currently hidden because it has not
+                                    been renewed in 7 days.</small>
+                                {% else %}
+                                <span class="badge bg-success mb-2">Active</span>
+                                {% if current_user.last_active_date %}
+                                <small class="text-muted d-block">Last renewed: {{
+                                    current_user.last_active_date.strftime('%Y-%m-%d') }}</small>
+                                {% endif %}
+                                {% endif %}
+                                <small class="text-secondary opacity-75 d-block mt-1">Saving profile renews for 7
+                                    days.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-custom">{{ _('Save Changes') }}</button>
+                </form>
+            </div>
+
+            <div class="form-card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3"
+                    style="border-bottom: 1px solid #edf2f7;">
+                    <h3 class="form-card-header mb-0" style="border-bottom: none; padding-bottom: 0;">Your Resumes</h3>
+                    <span class="badge bg-light text-dark border">{{ cvs|length }} / 5 Uploaded</span>
+                </div>
+
+                <!-- Upload Form -->
+                {% if cvs|length < 5 %} <form method="POST" enctype="multipart/form-data"
+                    class="mb-4 bg-light p-3 rounded border border-light">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="input-group">
+                        <input type="file" class="form-control custom-input bg-white" name="resume" accept=".pdf,.txt"
+                            required>
+                        <button type="submit" class="btn btn-success btn-custom"
+                            style="border-top-left-radius: 0; border-bottom-left-radius: 0;">Upload</button>
+                    </div>
+                    </form>
+                    {% endif %}
+
+                    <!-- Resume List -->
+                    {% if cvs %}
+                    <div class="resume-list mb-4">
+                        {% for cv in cvs %}
+                        <div class="resume-item">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <i class="bi bi-file-earmark-pdf-fill resume-icon"></i>
+                                <div class="resume-details">
+                                    <p class="resume-name">
+                                        {{ (cv.filename or 'Unknown.pdf').split('_', 2)[-1] }}
+                                        {% if cv.is_main %}
+                                        <span class="badge bg-primary rounded-pill small ms-2">Main Resume</span>
+                                        {% endif %}
+                                    </p>
+                                    <small class="text-muted">Uploaded on {{ cv.upload_date.strftime('%B %d, %Y')
+                                        }}</small>
+                                </div>
+                            </div>
+                            <div class="resume-actions d-flex gap-2">
+                                {% if not cv.parsed_tokens %}
+                                <span class="badge bg-warning text-dark d-flex align-items-center me-2">⏳ AI Analyzing...</span>
+                                {% else %}
+                                    {% if not cv.is_main %}
+                                    <form action="{{ url_for('set_main_cv', cv_id=cv.cv_id) }}" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit"
+                                            class="btn btn-outline-primary btn-sm btn-custom text-nowrap">Make Main</button>
+                                    </form>
+                                    {% endif %}
+                                {% endif %}
+                                <form action="{{ url_for('delete_cv', cv_id=cv.cv_id) }}" method="POST"
+                                    onsubmit="return confirm('Delete this resume permanently?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm btn-custom"><i
+                                            class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Dream Job Action -->
+                    <div class="mt-5 p-4 rounded text-center"
+                        style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 1px solid #e2e8f0;">
+                        <h4 class="mb-3 text-dark fw-bold">Ready to find your match?</h4>
+                        <p class="text-muted mb-4">Let our AI match your main resume to the best opportunities.</p>
+                        <div class="mb-3 d-flex justify-content-center">
+                            <div class="btn-group" role="group" aria-label="Location Filter">
+                                <input type="radio" class="btn-check" name="locationFilter" id="locAll" autocomplete="off" value="all" checked onchange="updateDreamJobLink(this.value)">
+                                <label class="btn btn-outline-secondary" for="locAll">🌍 All Locations</label>
+                            
+                                <input type="radio" class="btn-check" name="locationFilter" id="locHungary" autocomplete="off" value="hungary" onchange="updateDreamJobLink(this.value)">
+                                <label class="btn btn-outline-secondary" for="locHungary">🇭🇺 Hungary Only</label>
+                            
+                                <input type="radio" class="btn-check" name="locationFilter" id="locAbroad" autocomplete="off" value="abroad" onchange="updateDreamJobLink(this.value)">
+                                <label class="btn btn-outline-secondary" for="locAbroad">✈️ Abroad Only</label>
+                            </div>
+                        </div>
+                        
+                        <div id="dreamJobContainer">
+                            <a href="{{ url_for('dream_job') }}"
+                                id="btnDreamJob"
+                                class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5 mt-2" style="transition: all 0.3s ease;">✨ Find My Dream Job</a>
+                        </div>
+                        
+                        <script>
+                            function updateDreamJobLink(filterValue) {
+                                const btn = document.getElementById('btnDreamJob');
+                                const baseUrl = "{{ url_for('dream_job') }}";
+                                if (filterValue && filterValue !== 'all') {
+                                    btn.href = baseUrl + "?location_filter=" + filterValue;
+                                } else {
+                                    btn.href = baseUrl;
+                                }
+                            }
+                        </script>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-file-earmark-text display-1 text-muted opacity-50 mb-3 block"></i>
+                        <h5 class="text-dark">No resumes uploaded yet</h5>
+                        <p class="text-muted">Upload a PDF resume above to start matching with employers.</p>
+                    </div>
+                    {% endif %}
+            </div>
+
+            <div class="form-card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3"
+                    style="border-bottom: 1px solid #edf2f7;">
+                    <h3 class="form-card-header mb-0" style="border-bottom: none; padding-bottom: 0;">Supersearch</h3>
+                </div>
+                <div class="mb-3">
+                    <p class="text-muted small">Describe your ideal job in as much detail as possible to find the
+                        absolute best matches from our platform using AI.</p>
+                    <textarea id="idealJobDescription" class="form-control custom-input mb-3" rows="5"
+                        placeholder="I am looking for a software engineering position focused on backend development using Python..."></textarea>
+                </div>
+                <div class="mb-3 d-flex justify-content-center">
+                    <div class="btn-group" role="group" aria-label="Supersearch Location Filter">
+                        <input type="radio" class="btn-check" name="ssLocationFilter" id="ssLocAll" autocomplete="off" value="all" checked>
+                        <label class="btn btn-outline-secondary" for="ssLocAll">🌍 All Locations</label>
+                    
+                        <input type="radio" class="btn-check" name="ssLocationFilter" id="ssLocHungary" autocomplete="off" value="hungary">
+                        <label class="btn btn-outline-secondary" for="ssLocHungary">🇭🇺 Hungary Only</label>
+                    
+                        <input type="radio" class="btn-check" name="ssLocationFilter" id="ssLocAbroad" autocomplete="off" value="abroad">
+                        <label class="btn btn-outline-secondary" for="ssLocAbroad">✈️ Abroad Only</label>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <button id="btnSupersearch" class="btn btn-warning btn-custom shadow-sm"><i
+                            class="bi bi-search me-2"></i>Find Most Similar Jobs</button>
+                    <div id="supersearchLoading" class="spinner-border text-warning d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="supersearchError" class="alert alert-danger d-none"></div>
+                <div id="supersearchResults" class="row g-4 d-none">
+                    <!-- Results dynamically inserted here -->
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3"
+                    style="border-bottom: 1px solid #edf2f7;">
+                    <h3 class="form-card-header mb-0" style="border-bottom: none; padding-bottom: 0;">
+                        <i class="bi bi-clipboard2-data me-2"></i>My Survey
+                    </h3>
+                    {% if user_survey %}
+                    <span class="badge bg-success">Published</span>
+                    {% else %}
+                    <span class="badge bg-secondary">No survey</span>
+                    {% endif %}
+                </div>
+                <p class="text-muted small mb-3">Share a survey link with the community. You can publish one survey at a time — it will appear on the Survey Board.</p>
+                <div class="mb-3 p-2 rounded d-flex justify-content-between align-items-center" style="background:#fffbeb; border:1px solid #fcd34d;">
+                    <span class="small"><i class="bi bi-coin me-1 text-warning"></i>Publishing or updating costs <strong>1 token</strong> (balance: <strong>{{ current_user.token_balance }}</strong>)</span>
+                    {% if survey_rank %}
+                    <span class="badge bg-primary">Board rank: #{{ survey_rank }}</span>
+                    {% endif %}
+                </div>
+
+                <form method="POST" action="{{ url_for('save_survey') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label text-muted fw-semibold small">Survey Name</label>
+                            <input type="text" class="form-control custom-input" name="survey_name"
+                                placeholder="e.g. Career Satisfaction Survey" maxlength="255"
+                                value="{{ user_survey.survey_name if user_survey else '' }}" required>
+                        </div>
+                        <div class="col-md-4 mt-3 mt-md-0">
+                            <label class="form-label text-muted fw-semibold small">Est. Time (minutes)</label>
+                            <input type="number" class="form-control custom-input" name="estimated_minutes"
+                                placeholder="5" min="1" max="120"
+                                value="{{ user_survey.estimated_minutes if user_survey else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold small">Survey Link</label>
+                        <input type="text" class="form-control custom-input" name="survey_url"
+                            placeholder="forms.google.com/..." 
+                            value="{{ user_survey.survey_url if user_survey else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold small">{{ _('Short Description') }}</label>
+                        <textarea class="form-control custom-input" name="survey_description" rows="2"
+                            maxlength="500"
+                            placeholder="Briefly describe what your survey is about...">{{ user_survey.survey_description if user_survey else '' }}</textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-custom">
+                            {% if user_survey %}Update Survey{% else %}Publish Survey{% endif %}
+                        </button>
+                        {% if user_survey %}
+                        <button type="button" class="btn btn-outline-danger btn-custom" onclick="document.getElementById('deleteSurveyForm').submit();">
+                            <i class="bi bi-trash me-1"></i>Remove
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+                {% if user_survey %}
+                <form id="deleteSurveyForm" method="POST" action="{{ url_for('delete_survey') }}" class="d-none"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('btnSupersearch').addEventListener('click', async function () {
+            const description = document.getElementById('idealJobDescription').value;
+            const errorDiv = document.getElementById('supersearchError');
+            const resultsDiv = document.getElementById('supersearchResults');
+            const loading = document.getElementById('supersearchLoading');
+            const btn = document.getElementById('btnSupersearch');
+            
+            // Get selected location filter
+            const locRadios = document.getElementsByName('ssLocationFilter');
+            let locationFilter = 'all';
+            for (let i = 0; i < locRadios.length; i++) {
+                if (locRadios[i].checked) {
+                    locationFilter = locRadios[i].value;
+                    break;
+                }
+            }
+
+            errorDiv.classList.add('d-none');
+            resultsDiv.classList.add('d-none');
+
+            if (!description.trim()) {
+                errorDiv.textContent = 'Please enter an ideal job description.';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            loading.classList.remove('d-none');
+            resultsDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/supersearch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ 
+                        ideal_job_description: description,
+                        location_filter: locationFilter
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch matches.');
+                }
+
+                const remainingBadge = document.getElementById('ssRemainingBadge');
+                if (remainingBadge) {
+                    remainingBadge.textContent = data.remaining;
+                }
+
+                if (data.matches.length === 0) {
+                    errorDiv.textContent = 'No suitable matches found.';
+                    errorDiv.classList.remove('d-none');
+                } else {
+                    data.matches.forEach((job, index) => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-4';
+                        col.innerHTML = `
+                            <div class="card h-100 shadow-sm border-0" style="border-radius: 12px; transition: transform 0.2s; cursor: pointer;">
+                                <div class="card-body p-4 d-flex flex-column">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="badge bg-warning text-dark">#${index + 1}</span>
+                                        <span class="fw-bold text-success">${job.score}% Match</span>
+                                    </div>
+                                    <h5 class="fw-bold text-primary mb-1">${job.title}</h5>
+                                    <h6 class="text-muted mb-3">${job.company}</h6>
+                                    <p class="text-muted small flex-grow-1">${job.description}</p>
+                                    ${job.url ? `<a href="${job.url}" target="_blank" class="btn btn-outline-primary btn-sm mt-3 w-100">Apply Now</a>` : `<button class="btn btn-outline-secondary btn-sm mt-3 w-100" disabled>{{ _('No Link') }}</button>`}
+                                </div>
+                            </div>
+                        `;
+                        resultsDiv.appendChild(col);
+                    });
+                    resultsDiv.classList.remove('d-none');
+                }
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                loading.classList.add('d-none');
+            }
+        });
+    </script>
+    <script>
+        async function spendTokens(reward, btn) {
+            const errorId = reward === 'match' ? 'matchBuyError' : 'ssBuyError';
+            const errorEl = document.getElementById(errorId);
+            if (errorEl) { errorEl.textContent = ''; errorEl.classList.add('d-none'); }
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
+
+            try {
+                const response = await fetch('/tokens/spend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ reward: reward })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Update token balance display
+                    const balEl = document.getElementById('tokenBalance');
+                    if (balEl) balEl.textContent = data.new_balance;
+
+                    if (reward === 'match') {
+                        const rem = document.getElementById('matchRemaining');
+                        const lim = document.getElementById('matchLimit');
+                        if (lim) lim.textContent = data.new_limit;
+                        // remaining = limit - used; keep used the same, just bump limit
+                        if (rem) rem.textContent = parseInt(rem.textContent) + 1;
+                    } else {
+                        const ssLim = document.getElementById('ssLimit');
+                        const ssBadge = document.getElementById('ssRemainingBadge');
+                        if (ssLim) ssLim.textContent = data.new_limit;
+                        if (ssBadge) ssBadge.textContent = parseInt(ssBadge.textContent) + 1;
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    if (errorEl) { errorEl.textContent = data.error || 'Error'; errorEl.classList.remove('d-none'); }
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                if (errorEl) { errorEl.textContent = 'Network error.'; errorEl.classList.remove('d-none'); }
+            }
+        }
+    </script>
+    <script>
+        function checkMatchStatus() {
+            fetch('/api/match_status')
+                .then(r => r.json())
+                .then(data => {
+                    const btn = document.getElementById('btnDreamJob');
+                    if (btn) {
+                        if (data.is_calculating) {
+                            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Updating Matches...`;
+                            btn.classList.replace('btn-warning', 'btn-info');
+                            btn.classList.replace('text-dark', 'text-white');
+                            setTimeout(checkMatchStatus, 2000);
+                        } else {
+                            btn.innerHTML = `✨ Find My Dream Job`;
+                            btn.classList.replace('btn-info', 'btn-warning');
+                            btn.classList.replace('text-white', 'text-dark');
+                        }
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkMatchStatus();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-04-23 11:27+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: templates/admin_login.html:167 templates/dream_jobs.html:172
+#: templates/employer_login.html:159 templates/employer_register.html:159
+#: templates/landing.html:146 templates/listings.html:351
+#: templates/login.html:159 templates/map.html:196
+#: templates/notifications.html:211 templates/profile.html:214
+#: templates/register.html:159
+msgid "Navigation"
+msgstr ""
+
+#: templates/admin_login.html:203 templates/employer_login.html:178
+#: templates/employer_register.html:178 templates/landing.html:165
+#: templates/landing.html:188 templates/listings.html:370
+#: templates/login.html:178 templates/map.html:233 templates/register.html:178
+msgid "Log In"
+msgstr ""
+
+#: templates/dashboard.html:356 templates/dream_jobs.html:176
+#: templates/employer_login.html:163 templates/employer_register.html:163
+#: templates/landing.html:150 templates/listings.html:355
+#: templates/login.html:163 templates/map.html:200
+#: templates/notifications.html:215 templates/profile.html:218
+#: templates/register.html:163
+msgid "Job Board"
+msgstr ""
+
+#: templates/dashboard.html:361 templates/dream_jobs.html:181
+#: templates/employer_login.html:168 templates/employer_register.html:168
+#: templates/landing.html:155 templates/listings.html:360
+#: templates/login.html:168 templates/map.html:205
+#: templates/notifications.html:220 templates/profile.html:223
+#: templates/register.html:168
+msgid "Map View"
+msgstr ""
+
+#: templates/dashboard.html:366 templates/dream_jobs.html:186
+#: templates/employer_login.html:173 templates/employer_register.html:173
+#: templates/landing.html:160 templates/listings.html:365
+#: templates/login.html:173 templates/map.html:210
+#: templates/notifications.html:225 templates/profile.html:228
+#: templates/register.html:173
+msgid "Surveys"
+msgstr ""
+
+#: templates/employer_login.html:183 templates/employer_register.html:183
+#: templates/landing.html:170 templates/listings.html:375
+#: templates/login.html:183 templates/map.html:238 templates/register.html:183
+msgid "Register"
+msgstr ""
+
+#: templates/employer_login.html:188 templates/employer_register.html:188
+#: templates/landing.html:175 templates/listings.html:380
+#: templates/login.html:188 templates/map.html:243 templates/register.html:188
+msgid "Employer Portal"
+msgstr ""
+
+#: templates/landing.html:184
+msgid "Welcome to Resumatch"
+msgstr ""
+
+#: templates/landing.html:185
+msgid ""
+"The intelligent job matching platform that connects top talent with their"
+" dream roles effortlessly."
+msgstr ""
+
+#: templates/landing.html:187
+msgid "Register as Candidate"
+msgstr ""
+
+#: templates/landing.html:190
+msgid "Browse jobs without logging in"
+msgstr ""
+

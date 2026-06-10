@@ -1,0 +1,16 @@
+flask
+pymupdf
+werkzeug
+pandas
+Flask-SQLAlchemy
+psycopg2-binary
+gunicorn
+scikit-learn
+sentence-transformers
+flask-login
+python-dotenv
+gliner
+flask-babel
+flask-wtf
+nh3
+flask-limiter
