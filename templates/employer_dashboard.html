@@ -243,14 +243,14 @@
 <body>
     <!-- Language Switcher -->
     <div style="position: absolute; top: 20px; right: 20px; z-index: 1050; display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-        <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
-        <a href="{{ url_for('set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
+        <a href="{{ url_for('main_routes.set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
+        <a href="{{ url_for('main_routes.set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
     </div>
 
     <div class="main-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+            <a href="{{ url_for('main_routes.landing') }}" class="sidebar-logo">
                 <i class="bi bi-infinity"></i>
                 Resumatch
             </a>
@@ -261,7 +261,7 @@
                         Portal</span>
                 </li>
                 <li class="mt-2">
-                    <a href="{{ url_for('employer_dashboard') }}" class="active">
+                    <a href="{{ url_for('employer_routes.employer_dashboard') }}" class="active">
                         <i class="bi bi-grid-fill"></i> Dashboard
                     </a>
                 </li>
@@ -271,7 +271,7 @@
                     </a>
                 </li>
                 <li style="margin-top: 2rem;">
-                    <a href="{{ url_for('employer_logout') }}" class="text-danger">
+                    <a href="{{ url_for('employer_routes.employer_logout') }}" class="text-danger">
                         <i class="bi bi-box-arrow-left"></i> Log Out
                     </a>
                 </li>
@@ -337,7 +337,7 @@
                             </div>
 
                             <div class="job-actions">
-                                <form action="{{ url_for('employer_match_candidate', job_id=job.jd_id) }}" method="GET"
+                                <form action="{{ url_for('employer_routes.employer_match_candidate', job_id=job.jd_id) }}" method="GET"
                                     class="d-flex w-100 flex-wrap gap-2 mb-2 p-3 bg-light rounded border">
                                     <div class="flex-grow-1">
                                         <label for="keywords-{{ job.jd_id }}"
@@ -354,7 +354,7 @@
                                         </button>
                                     </div>
                                 </form>
-                                <form method="POST" action="{{ url_for('toggle_job_status', job_id=job.jd_id) }}" class="d-inline">
+                                <form method="POST" action="{{ url_for('employer_routes.toggle_job_status', job_id=job.jd_id) }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit"
                                         class="btn {{ 'btn-outline-warning' if job.active_status else 'btn-outline-success' }} btn-custom">
@@ -372,7 +372,7 @@
                                     data-url="{{ job.url }}">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
-                                <form method="POST" action="{{ url_for('delete_job', job_id=job.jd_id) }}" class="d-inline"
+                                <form method="POST" action="{{ url_for('employer_routes.delete_job', job_id=job.jd_id) }}" class="d-inline"
                                     onsubmit="return confirm('Permanently delete this job posting?');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-outline-danger btn-custom">
@@ -437,7 +437,7 @@
 
                     <div class="content-card">
                         <h3 class="card-title-custom">Company Profile</h3>
-                        <form action="{{ url_for('employer_update_profile') }}" method="POST">
+                        <form action="{{ url_for('employer_routes.employer_update_profile') }}" method="POST">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label class="form-label text-muted fw-semibold small">Company Name</label>
@@ -468,7 +468,7 @@
                     <h5 class="modal-title fw-bold">Post a New Job Opportunity</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="{{ url_for('create_job') }}" method="POST">
+                <form action="{{ url_for('employer_routes.create_job') }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body p-4">
                         <div class="mb-3">

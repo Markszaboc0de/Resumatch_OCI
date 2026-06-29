@@ -197,14 +197,14 @@
 <body>
     <!-- Language Switcher -->
     <div style="position: absolute; top: 20px; right: 20px; z-index: 1050; display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-        <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
-        <a href="{{ url_for('set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
+        <a href="{{ url_for('main_routes.set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
+        <a href="{{ url_for('main_routes.set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
     </div>
 
     <div class="main-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <a href="{{ url_for('landing') }}" class="sidebar-logo">
+            <a href="{{ url_for('main_routes.landing') }}" class="sidebar-logo">
                 <i class="bi bi-infinity"></i>
                 Resumatch
             </a>
@@ -215,37 +215,37 @@
                         style="font-size:0.75rem;font-weight:600;text-transform:uppercase;">{{ _('Navigation') }}</span>
                 </li>
                 <li class="mt-2">
-                    <a href="{{ url_for('dashboard') }}">
+                    <a href="{{ url_for('user_routes.dashboard') }}">
                         <i class="bi bi-grid-fill"></i> {{ _('Job Board') }}
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('job_map') }}">
+                    <a href="{{ url_for('main_routes.job_map') }}">
                         <i class="bi bi-map-fill"></i> {{ _('Map View') }}
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('survey_board') }}">
+                    <a href="{{ url_for('user_routes.survey_board') }}">
                         <i class="bi bi-clipboard2-data"></i> {{ _('Surveys') }}
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('profile') }}" class="active">
+                    <a href="{{ url_for('user_routes.profile') }}" class="active">
                         <i class="bi bi-person-circle"></i> My Profile
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('profile_tokens') }}">
+                    <a href="{{ url_for('user_routes.profile_tokens') }}">
                         <i class="bi bi-coin"></i> Token History
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('notifications') }}">
+                    <a href="{{ url_for('api_routes.notifications') }}">
                         <i class="bi bi-bell-fill"></i> Notifications
                     </a>
                 </li>
                 <li style="margin-top: 2rem;">
-                    <a href="{{ url_for('logout') }}" class="text-danger">
+                    <a href="{{ url_for('user_routes.logout') }}" class="text-danger">
                         <i class="bi bi-box-arrow-left"></i> Log Out
                     </a>
                 </li>
@@ -274,14 +274,14 @@
                     </div>
                     <div class="text-end">
                         <span class="fs-1 fw-bold text-success" id="tokenBalance">{{ current_user.token_balance }}</span>
-                        <div><a href="{{ url_for('profile_tokens') }}" class="small text-muted">View history →</a></div>
+                        <div><a href="{{ url_for('user_routes.profile_tokens') }}" class="small text-muted">View history →</a></div>
                     </div>
                 </div>
             </div>
 
             <div class="form-card">
                 <div class="form-card-header">Personal Information</div>
-                <form method="POST" action="{{ url_for('profile') }}">
+                <form method="POST" action="{{ url_for('user_routes.profile') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="row mb-4">
                         <div class="col-md-6">
@@ -444,14 +444,14 @@
                                 <span class="badge bg-warning text-dark d-flex align-items-center me-2">⏳ AI Analyzing...</span>
                                 {% else %}
                                     {% if not cv.is_main %}
-                                    <form action="{{ url_for('set_main_cv', cv_id=cv.cv_id) }}" method="POST">
+                                    <form action="{{ url_for('user_routes.set_main_cv', cv_id=cv.cv_id) }}" method="POST">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit"
                                             class="btn btn-outline-primary btn-sm btn-custom text-nowrap">Make Main</button>
                                     </form>
                                     {% endif %}
                                 {% endif %}
-                                <form action="{{ url_for('delete_cv', cv_id=cv.cv_id) }}" method="POST"
+                                <form action="{{ url_for('user_routes.delete_cv', cv_id=cv.cv_id) }}" method="POST"
                                     onsubmit="return confirm('Delete this resume permanently?');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-outline-danger btn-sm btn-custom"><i
@@ -481,7 +481,7 @@
                         </div>
                         
                         <div id="dreamJobContainer">
-                            <a href="{{ url_for('dream_job') }}"
+                            <a href="{{ url_for('user_routes.dream_job') }}"
                                 id="btnDreamJob"
                                 class="btn btn-warning btn-lg btn-custom shadow-sm text-dark px-5 mt-2" style="transition: all 0.3s ease;">✨ Find My Dream Job</a>
                         </div>
@@ -489,7 +489,7 @@
                         <script>
                             function updateDreamJobLink(filterValue) {
                                 const btn = document.getElementById('btnDreamJob');
-                                const baseUrl = "{{ url_for('dream_job') }}";
+                                const baseUrl = "{{ url_for('user_routes.dream_job') }}";
                                 if (filterValue && filterValue !== 'all') {
                                     btn.href = baseUrl + "?location_filter=" + filterValue;
                                 } else {
@@ -562,7 +562,7 @@
                     {% endif %}
                 </div>
 
-                <form method="POST" action="{{ url_for('save_survey') }}">
+                <form method="POST" action="{{ url_for('user_routes.save_survey') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="row mb-3">
                         <div class="col-md-8">
@@ -602,7 +602,7 @@
                     </div>
                 </form>
                 {% if user_survey %}
-                <form id="deleteSurveyForm" method="POST" action="{{ url_for('delete_survey') }}" class="d-none"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+                <form id="deleteSurveyForm" method="POST" action="{{ url_for('user_routes.delete_survey') }}" class="d-none"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
                 {% endif %}
             </div>
         </main>

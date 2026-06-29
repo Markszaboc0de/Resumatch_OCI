@@ -333,8 +333,8 @@
 <body>
     <!-- Language Switcher -->
     <div style="position: absolute; top: 20px; right: 20px; z-index: 1050; display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-        <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
-        <a href="{{ url_for('set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
+        <a href="{{ url_for('main_routes.set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
+        <a href="{{ url_for('main_routes.set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
     </div>
 
     <div class="main-wrapper">
@@ -352,27 +352,27 @@
                         current_user.username }}</span>
                 </li>
                 <li class="mt-2">
-                    <a href="{{ url_for('dashboard') }}" class="active">
+                    <a href="{{ url_for('user_routes.dashboard') }}" class="active">
                         <i class="bi bi-grid-fill"></i> {{ _('Job Board') }}
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('job_map') }}">
+                    <a href="{{ url_for('main_routes.job_map') }}">
                         <i class="bi bi-map-fill"></i> {{ _('Map View') }}
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('survey_board') }}">
+                    <a href="{{ url_for('user_routes.survey_board') }}">
                         <i class="bi bi-clipboard2-data"></i> {{ _('Surveys') }}
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('profile') }}">
+                    <a href="{{ url_for('user_routes.profile') }}">
                         <i class="bi bi-person-fill"></i> My Profile
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('notifications') }}">
+                    <a href="{{ url_for('api_routes.notifications') }}">
                         <i class="bi bi-bell-fill"></i> Notifications
                         {% if unread_count > 0 %}
                         <span class="badge rounded-pill bg-danger ms-auto">{{ unread_count }}</span>
@@ -380,7 +380,7 @@
                     </a>
                 </li>
                 <li style="margin-top: 2rem;">
-                    <a href="{{ url_for('logout') }}" class="text-danger">
+                    <a href="{{ url_for('user_routes.logout') }}" class="text-danger">
                         <i class="bi bi-box-arrow-right"></i> Log Out
                     </a>
                 </li>
@@ -399,7 +399,7 @@
             {% endwith %}
 
             <!-- Search Area -->
-            <form method="GET" action="{{ url_for('dashboard') }}" class="search-container mt-2">
+            <form method="GET" action="{{ url_for('user_routes.dashboard') }}" class="search-container mt-2">
                 <div class="search-form-wrapper">
                     <div class="search-input-group" style="flex: 2;">
                         <i class="bi bi-search"></i>
@@ -448,7 +448,7 @@
                         <!-- Action Col -->
                         <div class="job-action text-end">
                             {% if job.is_native %}
-                            <a href="{{ url_for('job_detail', jd_id=job.jd_id) }}" target="_blank"
+                            <a href="{{ url_for('main_routes.job_detail', jd_id=job.jd_id) }}" target="_blank"
                                 class="btn-visit stretched-link">{{ _('View Job') }}</a>
                             {% elif job.url %}
                             <a href="{{ job.url if job.url.startswith('http') else 'http://' + job.url }}"
@@ -479,7 +479,7 @@
                 <ul class="pagination justify-content-center">
                     <li class="page-item {% if page == 1 %}disabled{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('dashboard', page=page-1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}"
+                            href="{{ url_for('user_routes.dashboard', page=page-1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}"
                             tabindex="-1">{{ _('Previous') }}</a>
                     </li>
 
@@ -489,7 +489,7 @@
 
                     <li class="page-item {% if page == total_pages %}disabled{% endif %}">
                         <a class="page-link"
-                            href="{{ url_for('dashboard', page=page+1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}">{{ _('Next') }}</a>
+                            href="{{ url_for('user_routes.dashboard', page=page+1, search=search_query, country=country_filter, city=city_filter, company=company_filter) }}">{{ _('Next') }}</a>
                     </li>
                 </ul>
             </nav>

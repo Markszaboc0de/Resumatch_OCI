@@ -26,18 +26,18 @@
 <body>
     <!-- Language Switcher -->
     <div style="position: absolute; top: 20px; right: 20px; z-index: 1050; display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-        <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
-        <a href="{{ url_for('set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
+        <a href="{{ url_for('main_routes.set_language', lang='en') }}" class="btn btn-sm {% if session.get('lang', 'en') == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">EN</a>
+        <a href="{{ url_for('main_routes.set_language', lang='hu') }}" class="btn btn-sm {% if session.get('lang') == 'hu' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="font-size: 0.8rem; padding: 2px 8px; font-weight: bold;">HU</a>
     </div>
 
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('landing') }}">Resumatch</a>
+            <a class="navbar-brand" href="{{ url_for('main_routes.landing') }}">Resumatch</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('listings') }}">Database Listing</a>
+                        <a class="nav-link" href="{{ url_for('main_routes.listings') }}">Database Listing</a>
                     </li>
                 </ul>
             </div>
@@ -48,11 +48,11 @@
         <div>
             <h1 class="display-4 mb-5">Welcome to Resumatch</h1>
             <div class="d-flex justify-content-center flex-wrap">
-                <a href="{{ url_for('employer') }}" class="btn btn-primary btn-xl">I am an Employer</a>
+                <a href="{{ url_for('main_routes.employer') }}" class="btn btn-primary btn-xl">I am an Employer</a>
                 <a href="{{ url_for('job_seeker') }}" class="btn btn-success btn-xl">I am Looking for a Job</a>
             </div>
             <div class="mt-5">
-                <a href="{{ url_for('listings') }}" class="btn btn-outline-secondary">View All Listings</a>
+                <a href="{{ url_for('main_routes.listings') }}" class="btn btn-outline-secondary">View All Listings</a>
             </div>
         </div>
     </div>

@@ -14,3 +14,5 @@ flask-babel
 flask-wtf
 nh3
 flask-limiter
+celery
+redis
