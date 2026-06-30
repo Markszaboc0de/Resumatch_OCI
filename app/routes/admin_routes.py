@@ -99,6 +99,21 @@ def admin_edit_user(user_id):
     except ValueError:
         pass
 
+    try:
+        if 'token_balance' in request.form:
+            new_token_balance = int(request.form.get('token_balance'))
+            if new_token_balance != user.token_balance:
+                diff = new_token_balance - user.token_balance
+                user.token_balance = new_token_balance
+                from app.models import TokenTransactions
+                db.session.add(TokenTransactions(
+                    user_id=user.user_id,
+                    amount=diff,
+                    reason="Admin manual adjustment"
+                ))
+    except ValueError:
+        pass
+
     db.session.commit()
     flash(f'User {user.username} updated.')
     return redirect(url_for('admin_routes.admin_dashboard'))
