@@ -12,5 +12,13 @@ Run with:
 from app import app  # noqa: F401  (runs create_app(), configures celery)
 from app.extensions import celery  # noqa: F401  (the configured Celery instance)
 
-# Make sure the task module is imported so tasks are registered with the worker.
 import app.services.ai_service  # noqa: F401,E402
+
+from celery.signals import worker_process_init
+from app.extensions import db
+
+@worker_process_init.connect
+def dispose_sqlalchemy_pool(**kwargs):
+    """Dispose the connection pool in each Celery worker process so they don't share the parent's socket."""
+    with app.app_context():
+        db.engine.dispose()
