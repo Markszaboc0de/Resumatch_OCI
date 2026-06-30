@@ -1,5 +1,13 @@
-from app import app, db
+import os
+import sys
+# Add parent directory to path to find 'app'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app import create_app
+from app.extensions import db
 from sqlalchemy import text
+
+app = create_app()
 
 with app.app_context():
     try:
