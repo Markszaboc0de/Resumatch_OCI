@@ -27,7 +27,7 @@ def sync_scraped_jobs():
                 SELECT jd_id, company, title, city, country, raw_text, url 
                 FROM scraped_jobs 
                 WHERE (
-                    title ~* '\\y(trainee|intern|internship|apprenticeship|student|graduate|junior|associate|analyst|program|programme|entry level|prácticas|Growww|schnupper)\\y'
+                    title ~* '\\y(trainee|fellowship|ügyvédjelölt|bojtár|intern|internship|apprenticeship|student|graduate|junior|associate|analyst|program|programme|entry level|prácticas|Growww|schnupper)\\y'
                     OR 
                     title ~* '(gyakornok|diák|diplomás|friss ?diplomás|pályakezd|kezdő|képzés|praktikum|ösztöndíj|tanuló|bojtár|tapasztalat nélkül)'
                 )
