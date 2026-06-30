@@ -9,31 +9,30 @@ Migration: add employers.is_approved (privacy gate #7).
 Run from the project root:  python -m Migrations.add_employer_approval
 """
 import os
-import psycopg2
+import sys
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-if not DATABASE_URL:
-    raise SystemExit("DATABASE_URL is not set. Define it in .env before running this migration.")
+# Add parent directory to path to find 'app'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from app import create_app
+from app.extensions import db
+from sqlalchemy import text
+
+app = create_app()
 
 def run_migration():
-    conn = psycopg2.connect(DATABASE_URL)
-    cur = conn.cursor()
+    with app.app_context():
+        # 1. Add the column with NO default so pre-existing rows become NULL (distinguishable).
+        db.session.execute(text("ALTER TABLE employers ADD COLUMN IF NOT EXISTS is_approved BOOLEAN;"))
 
-    # 1. Add the column with NO default so pre-existing rows become NULL (distinguishable).
-    cur.execute("ALTER TABLE employers ADD COLUMN IF NOT EXISTS is_approved BOOLEAN;")
+        # 2. Grandfather only the rows that existed before this column (still NULL).
+        db.session.execute(text("UPDATE employers SET is_approved = TRUE WHERE is_approved IS NULL;"))
 
-    # 2. Grandfather only the rows that existed before this column (still NULL).
-    cur.execute("UPDATE employers SET is_approved = TRUE WHERE is_approved IS NULL;")
+        # 3. New inserts default to FALSE (pending approval) from now on.
+        db.session.execute(text("ALTER TABLE employers ALTER COLUMN is_approved SET DEFAULT FALSE;"))
 
-    # 3. New inserts default to FALSE (pending approval) from now on.
-    cur.execute("ALTER TABLE employers ALTER COLUMN is_approved SET DEFAULT FALSE;")
-
-    conn.commit()
-    cur.close()
-    conn.close()
-    print("Migration complete: employers.is_approved added; existing employers grandfathered (approved).")
-
+        db.session.commit()
+        print("Migration complete: employers.is_approved added; existing employers grandfathered (approved).")
 
 if __name__ == '__main__':
     run_migration()
